@@ -1,13 +1,17 @@
 {
   "name": "wl-ad-spy-lab",
   "private": true,
-  "version": "0.2.0",
+  "version": "0.3.0",
   "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
     "build": "node scripts/build-extension.mjs"
   },
   "dependencies": {
-    "ai": "^6.0.0",
+    "@ai-sdk/gateway": "^4.0.139",
+    "ai": "^7.0.166",
     "zod": "^4.1.0"
   },
   "devDependencies": {
