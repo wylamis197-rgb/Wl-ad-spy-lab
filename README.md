@@ -143,7 +143,7 @@ Os registros novos ficam no armazenamento local do Chrome, separados do banco de
 Depois de carregar a pasta extension-dist no Chrome, abra chrome://extensions, localize WL AD SPY LAB e clique em Atualizar (ou recarregue a extensão). Não remova a extensão antiga antes de exportar um backup, pois os dados ficam no perfil local.
 
 
-## V0.3.0 — limpeza de interface e transcrição automática
+## V0.3.2 — limpeza de interface e transcrição automática
 
 - A entrada antiga **Zenly/Zedly** é removida do painel lateral e do dashboard por uma rotina de limpeza do menu, inclusive quando a interface é renderizada dinamicamente.
 - A aba **Transcrição** permite selecionar um arquivo de vídeo local. O navegador reproduz o vídeo localmente e extrai apenas a faixa de áudio em WebM/Opus; o vídeo original não é enviado ao backend.
@@ -159,6 +159,7 @@ Depois de carregar a pasta extension-dist no Chrome, abra chrome://extensions, l
 2. Mantenha a autenticação OIDC habilitada para o projeto ou configure `AI_GATEWAY_API_KEY` como variável de ambiente.
 3. Faça o deploy de produção.
 4. Na extensão, abra **Inteligência → Transcrição**, informe `https://wl-ad-spy-lab.vercel.app` e o mesmo token definido na Vercel.
-5. Selecione um vídeo e clique em **Transcrever vídeo automaticamente**. O Chrome poderá solicitar permissão de acesso ao domínio do backend.
+5. Clique em **1. Autorizar acesso ao backend** e permita o domínio no aviso do Chrome.
+6. Selecione um vídeo e clique em **2. Transcrever vídeo automaticamente**. A autorização e a transcrição são ações separadas para o Chrome permitir a reprodução local do vídeo.
 
 O sistema processa vídeos selecionados manualmente pelo usuário. Ele não acessa vídeos de outras páginas ou anúncios automaticamente.
