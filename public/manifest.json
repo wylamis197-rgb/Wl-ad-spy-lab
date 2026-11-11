@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "WL AD SPY LAB",
   "short_name": "WL AD SPY LAB",
-  "version": "0.6.0",
+  "version": "0.6.1",
   "description": "Central gratuita de pesquisa, análise local e radar manual de checkout para anúncios.",
   "minimum_chrome_version": "116",
   "permissions": [

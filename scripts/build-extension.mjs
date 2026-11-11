@@ -113,9 +113,9 @@ async function writeExtensionZip() {
   end.writeUInt16LE(0, 20);
 
   await writeFile(
-    resolve(out, 'WL_AD_SPY_LAB_v0.6.0.zip'),
+    resolve(out, 'WL_AD_SPY_LAB_v0.6.1.zip'),
     Buffer.concat([...localParts, centralDirectory, end])
   );
 }
 await writeExtensionZip();
-console.log('WL AD SPY LAB v0.6.0: extensão gratuita com interface black/gold validada e ZIP instalável gerado em extension-dist/.');
+console.log('WL AD SPY LAB v0.6.1: extensão gratuita com interface black/gold validada e ZIP instalável gerado em extension-dist/.');

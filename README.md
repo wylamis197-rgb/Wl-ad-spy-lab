@@ -84,3 +84,9 @@ O ZIP é gerado em `extension-dist/WL_AD_SPY_LAB_v0.5.0.zip`.
 - Nenhuma API paga foi reativada.
 
 A atualização reorganiza e estiliza os módulos já existentes. Não adiciona busca ao vivo na Biblioteca de Anúncios da Meta, métricas externas de tráfego nem transcrição automática por IA.
+
+
+## V0.6.1 — trilho lateral de filtros
+
+- Na biblioteca de anúncios, os filtros existentes ficam em uma coluna lateral fixa enquanto a galeria ocupa o restante da tela.
+- Em telas menores, os filtros voltam a fluir acima da galeria.
