@@ -12,7 +12,8 @@ await cp(resolve(root, 'src/dashboard'), resolve(out, 'dashboard'), { recursive:
 await cp(resolve(root, 'src/lib'), resolve(out, 'lib'), { recursive: true });
 await writeFile(resolve(out, 'app.js'), gunzipSync(await readFile(resolve(root, 'src/app.js.gz'))));
 await writeFile(resolve(out, 'extras.js'), await readFile(resolve(root, 'src/extras.js')));
+await writeFile(resolve(out, 'remove-zenly.js'), await readFile(resolve(root, 'src/remove-zenly.js')));
 await mkdir(resolve(out, 'styles'), { recursive: true });
 await writeFile(resolve(out, 'styles/app.css'), gunzipSync(await readFile(resolve(root, 'src/styles/app.css.gz'))));
 await cp(resolve(root, 'src/background/service-worker.js'), resolve(out, 'background.js'));
-console.log('WL AD SPY LAB: extensão pronta em extension-dist/.');
+console.log('WL AD SPY LAB v0.3.0: extensão pronta em extension-dist/.');
