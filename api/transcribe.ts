@@ -1,5 +1,5 @@
 import { timingSafeEqual } from 'node:crypto';
-import { experimental_transcribe as transcribe } from 'ai';
+import { transcribe } from 'ai';
 import { gateway } from '@ai-sdk/gateway';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
