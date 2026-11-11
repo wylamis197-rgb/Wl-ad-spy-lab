@@ -22,4 +22,4 @@ const run = promisify(execFile);
 for (const file of ['app.js', 'extras.js', 'remove-zenly.js', 'background.js']) {
   await run(process.execPath, ['--check', resolve(out, file)]);
 }
-console.log('WL AD SPY LAB v0.3.0: extensão pronta e scripts validados em extension-dist/.');
+console.log('WL AD SPY LAB v0.3.2: extensão pronta e scripts validados em extension-dist/.');
