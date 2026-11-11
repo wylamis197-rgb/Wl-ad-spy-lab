@@ -2,11 +2,19 @@
   "manifest_version": 3,
   "name": "WL AD SPY LAB",
   "short_name": "WL AD SPY LAB",
-  "version": "0.2.0",
-  "description": "Central de pesquisa, organização e inteligência de anúncios e ofertas digitais.",
+  "version": "0.3.0",
+  "description": "Central de pesquisa, organização, inteligência e transcrição automática de anúncios.",
   "minimum_chrome_version": "116",
-  "permissions": ["sidePanel", "storage", "contextMenus"],
-  "optional_host_permissions": ["https://*/*", "http://localhost/*", "http://127.0.0.1/*"],
+  "permissions": [
+    "sidePanel",
+    "storage",
+    "contextMenus"
+  ],
+  "optional_host_permissions": [
+    "https://*/*",
+    "http://localhost/*",
+    "http://127.0.0.1/*"
+  ],
   "background": {
     "service_worker": "background.js"
   },
