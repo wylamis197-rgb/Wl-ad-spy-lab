@@ -1,0 +1,16 @@
+{
+  "name": "wl-ad-spy-lab",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/build-extension.mjs"
+  },
+  "dependencies": {
+    "ai": "^6.0.0",
+    "zod": "^4.1.0"
+  },
+  "devDependencies": {
+    "@vercel/node": "^5.3.0"
+  }
+}
