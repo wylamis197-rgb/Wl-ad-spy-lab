@@ -183,7 +183,6 @@
       state.backendAuthorized = true;
       state.items.backendConfig = { apiBase, token };
       state.items.transcribeConfig = { apiBase, token };
-      state.items.backendConfig = { apiBase, token };
       await save();
       status.textContent = 'Backend autorizado e configuração salva neste perfil do Chrome.';
       status.className = 'status good';
@@ -339,6 +338,8 @@
     let video, audioContext, recorder, timer, objectUrl;
     try {
       state.items.transcribeConfig = { apiBase, token };
+      state.items.backendConfig = { apiBase, token };
+      await save();
       say('Preparando o vídeo e extraindo apenas o áudio...');
       objectUrl = URL.createObjectURL(file);
       video = document.createElement('video');
