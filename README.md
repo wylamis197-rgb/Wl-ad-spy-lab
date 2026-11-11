@@ -143,7 +143,7 @@ Os registros novos ficam no armazenamento local do Chrome, separados do banco de
 Depois de carregar a pasta extension-dist no Chrome, abra chrome://extensions, localize WL AD SPY LAB e clique em Atualizar (ou recarregue a extensão). Não remova a extensão antiga antes de exportar um backup, pois os dados ficam no perfil local.
 
 
-## V0.3.2 — limpeza de interface e transcrição automática
+## V0.3.3 — limpeza de interface e transcrição automática
 
 - A entrada antiga **Zenly/Zedly** é removida do painel lateral e do dashboard por uma rotina de limpeza do menu, inclusive quando a interface é renderizada dinamicamente.
 - A aba **Transcrição** permite selecionar um arquivo de vídeo local. O navegador reproduz o vídeo localmente e extrai apenas a faixa de áudio em WebM/Opus; o vídeo original não é enviado ao backend.
@@ -152,6 +152,10 @@ Depois de carregar a pasta extension-dist no Chrome, abra chrome://extensions, l
 - O backend usa o token individual `AD_SPY_ACCESS_TOKEN`. Na aba Transcrição, informe a URL do backend e o mesmo token; ele fica armazenado apenas no perfil local do Chrome.
 - O projeto usa Node.js 22 e AI SDK 7. O Vercel AI Gateway precisa de autenticação OIDC habilitada no projeto ou de `AI_GATEWAY_API_KEY` como variável de ambiente. A chamada do modelo pode consumir créditos ou gerar cobrança na conta Vercel.
 - Não coloque a chave do Gateway dentro da extensão. O token de acesso e a credencial de IA são diferentes.
+
+### Baixar e instalar a versão atual
+
+O ZIP pronto é publicado junto com o site: [Baixar WL AD SPY LAB v0.3.3](https://wl-ad-spy-lab.vercel.app/WL_AD_SPY_LAB_v0.3.3.zip). Extraia o arquivo, abra `chrome://extensions`, ative o Modo do desenvolvedor, clique em **Carregar sem compactação** e selecione a pasta extraída. Para substituir uma instalação anterior, atualize a pasta carregada e clique em **Recarregar**.
 
 ### Ativar a transcrição automática
 
