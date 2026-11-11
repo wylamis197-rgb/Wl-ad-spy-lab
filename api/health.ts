@@ -21,6 +21,11 @@ export default function handler(req: VercelRequest, res: VercelResponse) {
   return res.status(200).json({
     ok: true,
     analysisMode: 'motor-local-regras-v1',
+    localAnalysisConfigured: true,
+    aiModelConfigured: false,
+    aiModel: null,
+    transcriptionModelConfigured: false,
+    trafficConfigured: false,
     checkoutRadarConfigured: true,
     paidExternalProviders: false
   });
