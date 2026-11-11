@@ -46,16 +46,13 @@ A interface da extensão já chama `POST /api/analyze`. O backend foi publicado 
 
 1. Faça upload/importação desta pasta como um projeto no GitHub e importe o repositório na Vercel, ou use o fluxo de deploy de sua preferência.
 2. Mantenha a raiz do projeto como diretório raiz da Vercel.
-3. Configure as variáveis de ambiente:
-   - `AD_SPY_ACCESS_TOKEN`: token longo e exclusivo para proteger seu endpoint pessoal.
-   - `AI_MODEL`: ID de um modelo atualmente disponível no Vercel AI Gateway, no formato `provedor/modelo`.
-   - `AI_GATEWAY_API_KEY`: configure quando sua implantação/conta exigir uma chave explícita. Em projetos Vercel com autenticação integrada do Gateway, siga a configuração OIDC atual da Vercel.
+3. Configure `AD_SPY_ACCESS_TOKEN` com um token longo e exclusivo para proteger seu endpoint pessoal. O projeto já define `AI_MODEL=openai/gpt-6.1-sol-fast` e usa OIDC para autenticação integrada do Vercel AI Gateway. Só configure `AI_GATEWAY_API_KEY` caso sua conta/implantação não consiga usar a autenticação OIDC.
 4. Faça o deploy.
 5. No WL AD SPY LAB, abra **Configurações** e informe a URL do projeto e o mesmo `AD_SPY_ACCESS_TOKEN`.
 6. Clique em **Salvar e autorizar conexão**. O Chrome pedirá permissão para conectar somente ao domínio informado.
 7. Clique em **Testar conexão** para conferir se o endpoint e o modelo estão configurados.
 
-Consulte o catálogo atual de modelos do Vercel AI Gateway antes de preencher `AI_MODEL`; os nomes e disponibilidades dos modelos mudam.
+O modelo padrão pode ser alterado pela variável `AI_MODEL`. Consulte o catálogo atual do Vercel AI Gateway antes de trocar o identificador.
 
 ### Importante sobre o token
 
