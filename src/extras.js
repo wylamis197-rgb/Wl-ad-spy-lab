@@ -125,7 +125,7 @@
     const say = (message, type = '') => { status.textContent = message; status.className = 'status ' + type; };
     button.disabled = true;
     try {
-      const apiBase = $('#apiBase').value.trim().replace(/\\/+$/, '');
+      const apiBase = $('#apiBase').value.trim().replace(/\/+$/, '');
       const origin = new URL(apiBase).origin;
       const granted = await chrome.permissions.request({ origins: [origin + '/*'] });
       if (!granted) throw new Error('A permissão de acesso ao backend não foi concedida.');
