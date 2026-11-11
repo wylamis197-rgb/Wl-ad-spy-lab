@@ -2,19 +2,18 @@
   if (document.getElementById('wl-intel-launcher')) return;
   const KEY = 'wlSpyIntelV1';
   const DEFAULT_API = 'https://wl-ad-spy-lab.vercel.app';
-  const state = { tab: 'offers', backendAuthorized: false, items: { offers: [], keywords: [], tracking: [], domains: [], transcripts: [], checkouts: [] } };
+  const state = { tab: 'offers', backendAuthorized: false, items: { offers: [], keywords: [], tracking: [], domains: [], transcripts: [], traffic: [], checkouts: [] } };
   const read = async () => {
     const d = await chrome.storage.local.get([KEY, 'settings']);
     state.items = { ...state.items, ...(d[KEY] || {}) };
     const appSettings = d.settings || {};
-    const saved = state.items.backendConfig || {};
+    const saved = state.items.backendConfig || state.items.transcribeConfig || {};
     const sharedConfig = {
       apiBase: appSettings.apiBaseUrl || saved.apiBase || DEFAULT_API,
       token: appSettings.accessToken || saved.token || ''
     };
     state.items.backendConfig = sharedConfig;
     delete state.items.transcribeConfig;
-    delete state.items.traffic;
   };
   const save = async () => chrome.storage.local.set({ [KEY]: state.items });
   const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
