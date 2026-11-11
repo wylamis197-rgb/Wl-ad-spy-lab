@@ -136,6 +136,9 @@
     button.disabled = true;
     let video, audioContext, recorder, timer, objectUrl;
     try {
+      const backendOrigin = new URL(apiBase).origin;
+      const permission = await chrome.permissions.request({ origins: [backendOrigin + '/*'] });
+      if (!permission) throw new Error('Permita o acesso da extensão ao backend para continuar.');
       state.items.transcribeConfig = { apiBase, token };
       await save();
       say('Preparando o vídeo e extraindo apenas o áudio...');
