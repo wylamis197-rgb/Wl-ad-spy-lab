@@ -56,8 +56,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const expectedBuffer = encoder.encode(expectedToken);
   if (!suppliedToken || suppliedBuffer.length !== expectedBuffer.length || !timingSafeEqual(suppliedBuffer, expectedBuffer)) return res.status(401).json({ error: 'Token de acesso inválido.' });
 
-  const modelId = process.env.AI_MODEL;
-  if (!modelId) return res.status(503).json({ error: 'Modelo de IA não configurado: defina AI_MODEL na Vercel.' });
+  const modelId = process.env.AI_MODEL || 'openai/gpt-6.1-sol-fast';
 
   const ad = (req.body as { ad?: Record<string, unknown> } | undefined)?.ad;
   if (!ad || typeof ad !== 'object') return res.status(400).json({ error: 'Envie os dados do anúncio no campo ad.' });
