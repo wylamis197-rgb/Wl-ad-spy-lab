@@ -27,7 +27,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   const expectedToken = process.env.AD_SPY_ACCESS_TOKEN;
   if (!expectedToken) return res.status(503).json({ error: 'Backend não configurado: defina AD_SPY_ACCESS_TOKEN na Vercel.' });
-  const suppliedToken = String(req.headers.authorization || '').replace(/^Bearer\\s+/i, '');
+  const suppliedToken = String(req.headers.authorization || '').replace(/^Bearer\s+/i, '');
   if (!validToken(suppliedToken, expectedToken)) return res.status(401).json({ error: 'Token de acesso inválido.' });
 
   const hasGatewayAuth = Boolean(process.env.AI_GATEWAY_API_KEY || process.env.VERCEL_OIDC_TOKEN);
