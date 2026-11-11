@@ -100,7 +100,7 @@
         state.items.transcripts.unshift({ id: crypto.randomUUID(), title: f.get('title'), transcript: f.get('transcript'), createdAt: new Date().toISOString(), source: 'manual' });
         await save(); render();
       };
-      $('#transList').innerHTML = (state.items.transcripts || []).map(x => card(x.title, x.transcript + (x.language ? '\\n\\nIdioma: ' + x.language : ''), x.createdAt, 'transcripts', x.id)).join('') || '<div class="empty">Nenhuma transcrição salva.</div>';
+      $('#transList').innerHTML = (state.items.transcripts || []).map(x => card(x.title, x.transcript + (x.language ? '\n\nIdioma: ' + x.language : ''), x.createdAt, 'transcripts', x.id)).join('') || '<div class="empty">Nenhuma transcrição salva.</div>';
       wireDeletes();
       return;
     }
@@ -113,7 +113,7 @@
       obj.id = crypto.randomUUID(); obj.createdAt = new Date().toISOString();
       state.items[state.tab].unshift(obj); await save(); render();
     };
-    $('#list').innerHTML = state.items[state.tab].map(x => card(x.title || x.term || x.name || x.domain || 'Registro', Object.entries(x).filter(([k]) => !['id','createdAt','title','term','name','domain'].includes(k)).map(([k,v]) => k + ': ' + v).join('\\n'), x.createdAt, state.tab, x.id)).join('') || '<div class="empty">Nada salvo aqui ainda. Adicione seu primeiro registro acima.</div>';
+    $('#list').innerHTML = state.items[state.tab].map(x => card(x.title || x.term || x.name || x.domain || 'Registro', Object.entries(x).filter(([k]) => !['id','createdAt','title','term','name','domain'].includes(k)).map(([k,v]) => k + ': ' + v).join('\n'), x.createdAt, state.tab, x.id)).join('') || '<div class="empty">Nada salvo aqui ainda. Adicione seu primeiro registro acima.</div>';
     wireDeletes();
   }
 
@@ -122,7 +122,7 @@
     const status = $('#transStatus');
     const file = $('#videoFile').files?.[0];
     const title = $('#videoTitle').value.trim() || file?.name || 'Vídeo sem título';
-    const apiBase = $('#apiBase').value.trim().replace(/\\/+$/, '');
+    const apiBase = $('#apiBase').value.trim().replace(/\/+$/, '');
     const token = $('#apiToken').value.trim();
     const say = (message, type = '') => { status.textContent = message; status.className = 'status ' + type; };
     if (!file) return say('Selecione um arquivo de vídeo primeiro.', 'error');
@@ -164,19 +164,20 @@
         video.addEventListener('ended', resolve, { once: true });
         video.addEventListener('error', () => reject(new Error('Falha ao reproduzir o vídeo para extrair o áudio.')), { once: true });
       });
+      recorder.start(1000);
       const playback = video.play();
       await Promise.all([metadata, audioContext.resume(), playback]);
       if (!Number.isFinite(video.duration) || video.duration <= 0) throw new Error('Não foi possível identificar a duração do vídeo.');
       if (video.duration > 12 * 60) throw new Error('Este vídeo passa de 12 minutos. Reduza o trecho e tente novamente.');
-      recorder.start(1000);
       timer = setInterval(() => {
         const pct = Math.min(99, Math.floor((video.currentTime / video.duration) * 100));
         say('Extraindo áudio localmente: ' + pct + '% · não feche esta janela.');
       }, 400);
       await ended;
       if (timer) clearInterval(timer);
+      const stopped = new Promise(resolve => recorder.addEventListener('stop', resolve, { once: true }));
       if (recorder.state !== 'inactive') recorder.stop();
-      await new Promise(resolve => recorder.addEventListener('stop', resolve, { once: true }));
+      await stopped;
       const audioBlob = new Blob(chunks, { type: recorder.mimeType || 'audio/webm' });
       if (!audioBlob.size) throw new Error('Nenhum áudio foi extraído. Confirme se o vídeo possui faixa de áudio.');
       if (audioBlob.size > 2.5 * 1024 * 1024) throw new Error('O áudio extraído ficou acima de 2,5 MB. Reduza a duração/qualidade do vídeo e tente novamente.');
