@@ -17,6 +17,7 @@ await writeFile(resolve(out, 'extras.js'), await readFile(resolve(root, 'src/ext
 await writeFile(resolve(out, 'remove-zenly.js'), await readFile(resolve(root, 'src/remove-zenly.js')));
 await mkdir(resolve(out, 'styles'), { recursive: true });
 await writeFile(resolve(out, 'styles/app.css'), gunzipSync(await readFile(resolve(root, 'src/styles/app.css.gz'))));
+await cp(resolve(root, 'src/styles/override.css'), resolve(out, 'styles/override.css'));
 await cp(resolve(root, 'src/background/service-worker.js'), resolve(out, 'background.js'));
 
 const run = promisify(execFile);
@@ -112,9 +113,9 @@ async function writeExtensionZip() {
   end.writeUInt16LE(0, 20);
 
   await writeFile(
-    resolve(out, 'WL_AD_SPY_LAB_v0.5.0.zip'),
+    resolve(out, 'WL_AD_SPY_LAB_v0.6.0.zip'),
     Buffer.concat([...localParts, centralDirectory, end])
   );
 }
 await writeExtensionZip();
-console.log('WL AD SPY LAB v0.5.0: extensão gratuita validada e ZIP instalável gerado em extension-dist/.');
+console.log('WL AD SPY LAB v0.6.0: extensão gratuita com interface black/gold validada e ZIP instalável gerado em extension-dist/.');

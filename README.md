@@ -74,3 +74,13 @@ npm run build
 ```
 
 O ZIP é gerado em `extension-dist/WL_AD_SPY_LAB_v0.5.0.zip`.
+
+
+## V0.6.0 — interface black & gold
+- Navegação principal do dashboard em barra horizontal superior.
+- Cartões de anúncios mais compactos, com até cinco colunas em telas largas.
+- Paleta black/gold champagne, preservando a identidade WL AD SPY LAB.
+- O clique no ícone da extensão abre o painel completo em uma aba do Chrome; os atalhos de captura pelo botão direito continuam abrindo o painel lateral.
+- Nenhuma API paga foi reativada.
+
+A atualização reorganiza e estiliza os módulos já existentes. Não adiciona busca ao vivo na Biblioteca de Anúncios da Meta, métricas externas de tráfego nem transcrição automática por IA.
