@@ -1,4 +1,6 @@
 import { cp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { execFile } from 'node:child_process';
+import { promisify } from 'node:util';
 import { gunzipSync } from 'node:zlib';
 import { resolve } from 'node:path';
 
@@ -16,4 +18,8 @@ await writeFile(resolve(out, 'remove-zenly.js'), await readFile(resolve(root, 's
 await mkdir(resolve(out, 'styles'), { recursive: true });
 await writeFile(resolve(out, 'styles/app.css'), gunzipSync(await readFile(resolve(root, 'src/styles/app.css.gz'))));
 await cp(resolve(root, 'src/background/service-worker.js'), resolve(out, 'background.js'));
-console.log('WL AD SPY LAB v0.3.0: extensão pronta em extension-dist/.');
+const run = promisify(execFile);
+for (const file of ['app.js', 'extras.js', 'remove-zenly.js', 'background.js']) {
+  await run(process.execPath, ['--check', resolve(out, file)]);
+}
+console.log('WL AD SPY LAB v0.3.0: extensão pronta e scripts validados em extension-dist/.');
