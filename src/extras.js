@@ -2,7 +2,7 @@
   if (document.getElementById('wl-intel-launcher')) return;
   const KEY = 'wlSpyIntelV1';
   const DEFAULT_API = 'https://wl-ad-spy-lab.vercel.app';
-  const state = { tab: 'offers', backendAuthorized: false, items: { offers: [], keywords: [], tracking: [], domains: [], transcripts: [] } };
+  const state = { tab: 'offers', backendAuthorized: false, items: { offers: [], keywords: [], tracking: [], domains: [], transcripts: [], traffic: [], checkouts: [] } };
   const read = async () => {
     const d = await chrome.storage.local.get(KEY);
     state.items = { ...state.items, ...(d[KEY] || {}) };
@@ -50,7 +50,7 @@
   <div class="veil" id="veil"><section class="panel" role="dialog" aria-label="Central de inteligência">
   <header><div><strong>WL AD SPY LAB</strong><small>Central de inteligência e organização</small></div><button class="close" id="close">Fechar</button></header>
   <nav id="tabs">
-    <button data-tab="offers">Ofertas salvas</button><button data-tab="keywords">Palavras-chave</button><button data-tab="tracking">Rastreamento</button><button data-tab="domains">Domínios</button><button data-tab="transcript">Transcrição</button>
+    <button data-tab="offers">Ofertas salvas</button><button data-tab="keywords">Palavras-chave</button><button data-tab="tracking">Rastreamento</button><button data-tab="domains">Domínios</button><button data-tab="traffic">Tráfego</button><button data-tab="checkout">Radar de checkout</button><button data-tab="transcript">Transcrição</button>
   </nav><main id="content"></main></section></div>`;
   const $ = s => shadow.querySelector(s);
   $('#open').onclick = () => $('#veil').classList.add('open');
@@ -67,8 +67,10 @@
   function render() {
     $('#tabs').querySelectorAll('button').forEach(b => b.classList.toggle('active', b.dataset.tab === state.tab));
     const c = $('#content');
+    if (state.tab === 'traffic') { renderTraffic(); return; }
+    if (state.tab === 'checkout') { renderCheckout(); return; }
     if (state.tab === 'transcript') {
-      const cfg = state.items.transcribeConfig || {};
+      const cfg = state.items.backendConfig || state.items.transcribeConfig || {};
       c.innerHTML = `
         <h3>Transcrição automática de vídeo</h3>
         <p class="hint">Selecione um vídeo salvo no computador. O navegador extrai somente o áudio e envia para transcrição. O arquivo de vídeo não é enviado ao servidor.</p>
@@ -119,6 +121,182 @@
     wireDeletes();
   }
 
+
+  function currentBackendConfig() {
+    return state.items.backendConfig || state.items.transcribeConfig || {};
+  }
+
+  function renderTraffic() {
+    const cfg = currentBackendConfig();
+    $('#content').innerHTML =
+      '<h3>Tráfego estimado · Similarweb</h3>' +
+      '<p class="hint">Consulte estimativas mensais de visitas, visitantes, visualizações, rejeição e engajamento. Os dados vêm da API do Similarweb e não são analytics internos do concorrente.</p>' +
+      '<section class="capture"><label>Domínio para consultar<input id="trafficDomain" placeholder="exemplo.com.br" autocomplete="url"></label>' +
+      '<label>URL do backend<input id="trafficApiBase" type="url" value="' + esc(cfg.apiBase || DEFAULT_API) + '"></label>' +
+      '<label>Token de acesso do backend<input id="trafficToken" type="password" autocomplete="off" placeholder="Mesmo token usado na Transcrição"></label>' +
+      '<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="secondary" id="trafficAuthorize">1. Autorizar backend</button>' +
+      '<button class="primary" id="trafficRun">2. Consultar Similarweb</button></div><div class="status" id="trafficStatus" aria-live="polite"></div>' +
+      '<p class="hint">A chave Similarweb fica somente nas variáveis de ambiente da Vercel. A consulta usa créditos e depende de uma conta com acesso à API.</p></section>' +
+      '<div id="trafficHistory"></div>';
+    $('#trafficToken').value = cfg.token || '';
+    $('#trafficAuthorize').onclick = () => authorizeCustomBackend('trafficApiBase', 'trafficToken', 'trafficStatus');
+    $('#trafficRun').onclick = runTrafficLookup;
+    renderTrafficHistory();
+  }
+
+  function formatMetric(value) {
+    if (value === null || value === undefined || value === '') return '—';
+    const number = Number(value);
+    return Number.isFinite(number) ? Math.round(number).toLocaleString('pt-BR') : esc(value);
+  }
+
+  function renderTrafficHistory() {
+    const target = $('#trafficHistory');
+    if (!target) return;
+    const records = (state.items.traffic || []).slice(0, 12);
+    target.innerHTML = '<h3>Consultas recentes</h3>' + (records.map(record => {
+      const data = Array.isArray(record.data) ? record.data : [];
+      const rows = data.map(row =>
+        '<tr><td>' + esc(row.date || '—') + '</td><td style="text-align:right">' + formatMetric(row.visits) +
+        '</td><td style="text-align:right">' + formatMetric(row.unique_visitors) +
+        '</td><td style="text-align:right">' + (row.bounce_rate == null ? '—' : (Number(row.bounce_rate) * 100).toLocaleString('pt-BR', { maximumFractionDigits: 1 }) + '%') +
+        '</td><td style="text-align:right">' + (row.pages_per_visit == null ? '—' : Number(row.pages_per_visit).toLocaleString('pt-BR', { maximumFractionDigits: 2 })) + '</td></tr>'
+      ).join('');
+      return '<article class="item"><b>' + esc(record.domain || 'Domínio') + ' · Similarweb</b>' +
+        '<p class="meta">' + (record.fetchedAt ? new Date(record.fetchedAt).toLocaleString('pt-BR') : '') + ' · Estimativa mensal · Brasil</p>' +
+        '<div style="overflow:auto"><table style="width:100%;border-collapse:collapse;font-size:11px;min-width:410px">' +
+        '<thead><tr><th style="text-align:left;padding:6px">Mês</th><th style="text-align:right;padding:6px">Visitas</th><th style="text-align:right;padding:6px">Visitantes</th><th style="text-align:right;padding:6px">Rejeição</th><th style="text-align:right;padding:6px">Páginas/visita</th></tr></thead>' +
+        '<tbody>' + (rows || '<tr><td colspan="5">Sem série mensal retornada.</td></tr>') + '</tbody></table></div>' +
+        '<p>' + esc(record.disclaimer || 'Métricas estimadas pelo Similarweb.') + '</p></article>';
+    }).join('') || '<div class="empty">Nenhuma consulta de tráfego salva.</div>');
+  }
+
+  async function authorizeCustomBackend(baseId, tokenId, statusId) {
+    const status = $('#' + statusId);
+    try {
+      const apiBase = $('#' + baseId).value.trim().replace(/\/+$/, '');
+      const token = $('#' + tokenId).value.trim();
+      if (!token) throw new Error('Informe o token de acesso do backend.');
+      const origin = new URL(apiBase).origin;
+      const granted = await chrome.permissions.request({ origins: [origin + '/*'] });
+      if (!granted) throw new Error('A permissão de acesso ao backend não foi concedida.');
+      state.backendAuthorized = true;
+      state.items.backendConfig = { apiBase, token };
+      state.items.transcribeConfig = { apiBase, token };
+      state.items.backendConfig = { apiBase, token };
+      await save();
+      status.textContent = 'Backend autorizado e configuração salva neste perfil do Chrome.';
+      status.className = 'status good';
+    } catch (error) {
+      status.textContent = error?.message || 'Não foi possível autorizar o backend.';
+      status.className = 'status error';
+    }
+  }
+
+  async function runTrafficLookup() {
+    const button = $('#trafficRun');
+    const status = $('#trafficStatus');
+    const domain = $('#trafficDomain').value.trim();
+    const apiBase = $('#trafficApiBase').value.trim().replace(/\/+$/, '');
+    const token = $('#trafficToken').value.trim();
+    const say = (message, type = '') => { status.textContent = message; status.className = 'status ' + type; };
+    if (!domain) return say('Informe o domínio que deseja consultar.', 'error');
+    if (!token) return say('Informe o token de acesso do backend.', 'error');
+    if (!state.backendAuthorized) return say('Autorize o backend primeiro. Essa etapa libera a conexão no Chrome.', 'error');
+    button.disabled = true;
+    try {
+      state.items.backendConfig = { apiBase, token };
+      state.items.transcribeConfig = { apiBase, token };
+      await save();
+      say('Consultando métricas no Similarweb...');
+      const response = await fetch(apiBase + '/api/traffic', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+        body: JSON.stringify({ domain })
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(payload.error || 'Falha ao consultar o tráfego (HTTP ' + response.status + ').');
+      state.items.traffic ||= [];
+      state.items.traffic.unshift({ ...payload, id: crypto.randomUUID(), createdAt: new Date().toISOString() });
+      await save();
+      say('Consulta concluída. Os dados foram salvos no histórico.', 'good');
+      renderTrafficHistory();
+    } catch (error) {
+      say(error?.message || 'Não foi possível consultar o Similarweb.', 'error');
+    } finally {
+      button.disabled = false;
+    }
+  }
+
+  function renderCheckout() {
+    const cfg = currentBackendConfig();
+    $('#content').innerHTML =
+      '<h3>Radar de checkout</h3>' +
+      '<p class="hint">Informe a página de vendas ou o link de checkout. O radar abre somente esse endereço público, identifica links encontrados na página e tenta reconhecer a plataforma de pagamento.</p>' +
+      '<section class="capture"><label>URL da página de vendas ou checkout<input id="checkoutUrl" type="url" placeholder="https://exemplo.com/oferta" autocomplete="url"></label>' +
+      '<label>URL do backend<input id="checkoutApiBase" type="url" value="' + esc(cfg.apiBase || DEFAULT_API) + '"></label>' +
+      '<label>Token de acesso do backend<input id="checkoutToken" type="password" autocomplete="off" placeholder="Mesmo token usado na Transcrição"></label>' +
+      '<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="secondary" id="checkoutAuthorize">1. Autorizar backend</button>' +
+      '<button class="primary" id="checkoutRun">2. Inspecionar URL</button></div><div class="status" id="checkoutStatus" aria-live="polite"></div>' +
+      '<p class="hint">Reconhece Cakto, Hotmart, Kiwify, Eduzz, Ticto, Greenn, PerfectPay, Monetizze, Kirvano, Yampi, Appmax e Braip. A presença de checkout não comprova vendas ou faturamento.</p></section>' +
+      '<div id="checkoutHistory"></div>';
+    $('#checkoutToken').value = cfg.token || '';
+    $('#checkoutAuthorize').onclick = () => authorizeCustomBackend('checkoutApiBase', 'checkoutToken', 'checkoutStatus');
+    $('#checkoutRun').onclick = runCheckoutScan;
+    renderCheckoutHistory();
+  }
+
+  function renderCheckoutHistory() {
+    const target = $('#checkoutHistory');
+    if (!target) return;
+    const records = (state.items.checkouts || []).slice(0, 20);
+    target.innerHTML = '<h3>Radar · URLs analisadas</h3>' + (records.map(record => {
+      const links = (record.checkouts || []).map(item =>
+        '<p><b>' + esc(item.platform) + '</b> · ' + esc(item.confidence) + '<br><a href="' + esc(item.url) + '" target="_blank" rel="noopener noreferrer">' + esc(item.url) + '</a></p>'
+      ).join('');
+      return '<article class="item"><b>' + esc(record.pageTitle || record.finalUrl || record.sourceUrl || 'Página analisada') + '</b>' +
+        '<p class="meta">' + (record.checkedAt ? new Date(record.checkedAt).toLocaleString('pt-BR') : '') + '</p>' +
+        (record.detectedPrice ? '<p>Preço detectado no texto da página: <b>' + esc(record.detectedPrice) + '</b></p>' : '') +
+        '<p>' + (record.checkoutDetected ? 'Checkout identificado' : 'Nenhum link de checkout reconhecido nesta leitura') + '</p>' +
+        (links || '') + '<p><a href="' + esc(record.sourceUrl || record.finalUrl || '#') + '" target="_blank" rel="noopener noreferrer">Abrir página de origem</a></p></article>';
+    }).join('') || '<div class="empty">Nenhuma URL analisada ainda.</div>');
+  }
+
+  async function runCheckoutScan() {
+    const button = $('#checkoutRun');
+    const status = $('#checkoutStatus');
+    const url = $('#checkoutUrl').value.trim();
+    const apiBase = $('#checkoutApiBase').value.trim().replace(/\/+$/, '');
+    const token = $('#checkoutToken').value.trim();
+    const say = (message, type = '') => { status.textContent = message; status.className = 'status ' + type; };
+    if (!url) return say('Informe uma URL para inspecionar.', 'error');
+    if (!token) return say('Informe o token de acesso do backend.', 'error');
+    if (!state.backendAuthorized) return say('Autorize o backend primeiro. Essa etapa libera a conexão no Chrome.', 'error');
+    button.disabled = true;
+    try {
+      state.items.backendConfig = { apiBase, token };
+      state.items.transcribeConfig = { apiBase, token };
+      await save();
+      say('Abrindo a página pública e procurando links de checkout...');
+      const response = await fetch(apiBase + '/api/checkout-radar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+        body: JSON.stringify({ url })
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(payload.error || 'Falha ao inspecionar o endereço (HTTP ' + response.status + ').');
+      state.items.checkouts ||= [];
+      state.items.checkouts.unshift({ ...payload, id: crypto.randomUUID(), createdAt: new Date().toISOString() });
+      await save();
+      say(payload.checkoutDetected ? 'Checkout identificado e salvo no radar.' : 'Página analisada. Nenhum checkout conhecido apareceu nos links públicos encontrados.', 'good');
+      renderCheckoutHistory();
+    } catch (error) {
+      say(error?.message || 'Não foi possível inspecionar esta URL.', 'error');
+    } finally {
+      button.disabled = false;
+    }
+  }
+
   async function authorizeBackend() {
     const button = $('#authorizeBackend');
     const status = $('#transStatus');
@@ -130,6 +308,8 @@
       const granted = await chrome.permissions.request({ origins: [origin + '/*'] });
       if (!granted) throw new Error('A permissão de acesso ao backend não foi concedida.');
       state.backendAuthorized = true;
+      state.items.backendConfig = { apiBase, token: $('#apiToken').value.trim() };
+      await save();
       say('Acesso autorizado. Agora clique em “2. Transcrever vídeo automaticamente”.', 'good');
     } catch (error) {
       say(error?.message || 'Não foi possível autorizar o backend.', 'error');
