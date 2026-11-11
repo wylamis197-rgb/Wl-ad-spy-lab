@@ -1,6 +1,7 @@
 import { timingSafeEqual } from 'node:crypto';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { generateText, Output, gateway } from 'ai';
+import { generateText, Output } from 'ai';
+import { gateway } from '@ai-sdk/gateway';
 import { z } from 'zod';
 
 const AnalysisSchema = z.object({
