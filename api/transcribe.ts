@@ -30,9 +30,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const suppliedToken = String(req.headers.authorization || '').replace(/^Bearer\s+/i, '');
   if (!validToken(suppliedToken, expectedToken)) return res.status(401).json({ error: 'Token de acesso inválido.' });
 
-  const hasGatewayAuth = Boolean(process.env.AI_GATEWAY_API_KEY || process.env.VERCEL_OIDC_TOKEN);
-  if (!hasGatewayAuth) return res.status(503).json({ error: 'Autenticação do Vercel AI Gateway indisponível. Habilite OIDC no projeto ou configure AI_GATEWAY_API_KEY.' });
-
   const body = (req.body || {}) as { audioBase64?: unknown; mediaType?: unknown; fileName?: unknown };
   const encoded = typeof body.audioBase64 === 'string' ? body.audioBase64 : '';
   if (!encoded || encoded.length > 3_500_000 || !/^[A-Za-z0-9+/]+={0,2}$/.test(encoded)) {
