@@ -15,5 +15,5 @@ export default function handler(req: VercelRequest, res: VercelResponse) {
   const suppliedBuffer = encoder.encode(suppliedToken);
   const expectedBuffer = encoder.encode(expectedToken);
   if (!suppliedToken || suppliedBuffer.length !== expectedBuffer.length || !timingSafeEqual(suppliedBuffer, expectedBuffer)) return res.status(401).json({ error: 'Token de acesso inválido.' });
-  return res.status(200).json({ ok: true, aiModelConfigured: Boolean(process.env.AI_MODEL) });
+  return res.status(200).json({ ok: true, aiModelConfigured: true, aiModel: process.env.AI_MODEL || 'openai/gpt-6.1-sol-fast', transcriptionModelConfigured: true, trafficConfigured: Boolean(process.env.SIMILARWEB_API_KEY), checkoutRadarConfigured: true });
 }
