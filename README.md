@@ -40,7 +40,7 @@ A V1 não faz raspagem em massa, não baixa automaticamente criativos e não ten
 
 A interface da extensão já chama `POST /api/analyze`. O backend foi publicado em produção na Vercel: `https://wl-ad-spy-lab.vercel.app`. A URL já vem preenchida nas Configurações da extensão.
 
-**Estado atual:** o projeto e o deploy estão criados, mas a análise com IA ainda não está liberada. As variáveis `AD_SPY_ACCESS_TOKEN` e `AI_MODEL` precisam ser configuradas no projeto Vercel; a credencial do provedor/Gateway também pode ser necessária conforme a conta. Até isso ser feito, os endpoints retornam que o backend não está configurado.
+**Estado atual:** o backend já usa o Vercel AI Gateway com o modelo padrão `openai/gpt-6.1-sol-fast`. O projeto está configurado para autenticação OIDC do Vercel. A chave do provedor nunca é colocada na extensão. O endpoint ainda precisa ser validado por uma chamada real autorizada; uso do Gateway pode gerar cobrança/créditos na conta Vercel.
 
 ### Publicar o backend na Vercel
 
@@ -133,17 +133,17 @@ Os registros novos ficam no armazenamento local do Chrome, separados do banco de
 ### Limites explícitos dos módulos
 
 - Rastreamento não consulta anúncios da Meta automaticamente nem estima vendas.
-- Dossiê de domínio não consulta um provedor de tráfego nesta versão; só organiza informações e fontes inseridas pelo usuário.
+- A aba **Tráfego** consulta a API v5 do Similarweb para visitas, visitantes, visualizações, taxa de rejeição e páginas por visita no Brasil, com série mensal dos seis meses completos mais recentes. As métricas são estimativas do Similarweb, não analytics internos do concorrente. Exige `SIMILARWEB_API_KEY` na Vercel e uma conta Similarweb com API/créditos liberados.
 - A aba Transcrição aceita texto manual ou vídeo local: extrai apenas o áudio no navegador e solicita transcrição automática ao backend Vercel AI Gateway.
-- O radar de checkouts e um ranking externo de ofertas escaladas ainda dependem de fontes de dados e integrações que não estão configuradas.
-- A análise de IA continua condicionada à configuração das variáveis e credenciais no projeto Vercel.
+- A aba **Radar de checkout** inspeciona uma URL pública enviada manualmente, encontra links de checkout visíveis no HTML e identifica plataformas conhecidas (Cakto, Hotmart, Kiwify, Eduzz, Ticto, Greenn, PerfectPay, Monetizze, Kirvano, Yampi, Appmax e Braip). Não confirma vendas, faturamento nem quantidade de compradores; conteúdo renderizado por JavaScript ou atrás de login pode não aparecer.
+- A análise por IA usa o modelo padrão do AI Gateway configurado no projeto; a disponibilidade depende de o OIDC e o faturamento/créditos do Gateway estarem ativos.
 
 ### Atualização
 
 Depois de carregar a pasta extension-dist no Chrome, abra chrome://extensions, localize WL AD SPY LAB e clique em Atualizar (ou recarregue a extensão). Não remova a extensão antiga antes de exportar um backup, pois os dados ficam no perfil local.
 
 
-## V0.3.3 — limpeza de interface e transcrição automática
+## V0.4.0 — tráfego, radar de checkout e IA
 
 - A entrada antiga **Zenly/Zedly** é removida do painel lateral e do dashboard por uma rotina de limpeza do menu, inclusive quando a interface é renderizada dinamicamente.
 - A aba **Transcrição** permite selecionar um arquivo de vídeo local. O navegador reproduz o vídeo localmente e extrai apenas a faixa de áudio em WebM/Opus; o vídeo original não é enviado ao backend.
@@ -155,7 +155,7 @@ Depois de carregar a pasta extension-dist no Chrome, abra chrome://extensions, l
 
 ### Baixar e instalar a versão atual
 
-O ZIP pronto é publicado junto com o site: [Baixar WL AD SPY LAB v0.3.3](https://wl-ad-spy-lab.vercel.app/WL_AD_SPY_LAB_v0.3.3.zip). Extraia o arquivo, abra `chrome://extensions`, ative o Modo do desenvolvedor, clique em **Carregar sem compactação** e selecione a pasta extraída. Para substituir uma instalação anterior, atualize a pasta carregada e clique em **Recarregar**.
+O ZIP pronto é publicado junto com o site: [Baixar WL AD SPY LAB v0.3.3](https://wl-ad-spy-lab.vercel.app/WL_AD_SPY_LAB_v0.4.0.zip). Extraia o arquivo, abra `chrome://extensions`, ative o Modo do desenvolvedor, clique em **Carregar sem compactação** e selecione a pasta extraída. Para substituir uma instalação anterior, atualize a pasta carregada e clique em **Recarregar**.
 
 ### Ativar a transcrição automática
 
@@ -167,3 +167,23 @@ O ZIP pronto é publicado junto com o site: [Baixar WL AD SPY LAB v0.3.3](https:
 6. Selecione um vídeo e clique em **2. Transcrever vídeo automaticamente**. A autorização e a transcrição são ações separadas para o Chrome permitir a reprodução local do vídeo.
 
 O sistema processa vídeos selecionados manualmente pelo usuário. Ele não acessa vídeos de outras páginas ou anúncios automaticamente.
+
+
+### Ativar a integração de tráfego (Similarweb)
+
+1. A conta Similarweb precisa ter acesso ao produto API e créditos habilitados. A documentação oficial exige uma API key ativa; contas sem acesso à API não conseguem consultar os endpoints.
+2. No Similarweb, entre em **Settings → Account → Data Tools / API**, gere uma chave REST API e confirme que ela está ativa.
+3. Na Vercel, abra o projeto **wl-ad-spy-lab → Settings → Environment Variables**.
+4. Cadastre `SIMILARWEB_API_KEY` como variável **Sensitive** no ambiente **Production**.
+5. Faça novo deploy e use a aba **Inteligência → Tráfego** para consultar um domínio.
+
+Não cole a chave Similarweb na extensão nem em conversas. O endpoint `POST /api/traffic` mantém a credencial no servidor e valida o token pessoal do backend antes de consultar o provedor.
+
+### Usar o Radar de checkout
+
+1. Abra **Inteligência → Radar de checkout**.
+2. Cole a URL pública de uma página de vendas ou checkout encontrada durante sua pesquisa.
+3. Autorize o backend no Chrome e clique em **Inspecionar URL**.
+4. O radar registra a página, o título, um preço que esteja visível no HTML e os links de checkout reconhecidos.
+
+O radar consulta somente o endereço informado manualmente, limita o tamanho da página e bloqueia destinos locais/privados. Não faz varredura em massa de sites nem acessa áreas autenticadas.
