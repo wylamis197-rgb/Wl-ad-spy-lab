@@ -1,186 +1,76 @@
-# WL AD SPY LAB — V1
+# WL AD SPY LAB — V0.5.0 (edição sem APIs pagas)
 
-Extensão Chrome para organizar referências da Biblioteca de Anúncios, registrar anunciantes, estruturar oportunidades e solicitar análises de oferta com IA.
+Extensão Chrome para pesquisa manual de anúncios, organização de referências, análise textual por regras locais e inspeção de links de checkout encontrados em páginas públicas.
 
-## O que já funciona nesta versão
+## O que esta versão oferece
 
-- Extensão Chrome Manifest V3, com painel lateral aberto pelo ícone da extensão.
-- Menu de contexto: selecione um texto em uma página ou clique com o botão direito sobre um link e escolha **Salvar seleção no WL AD SPY LAB** ou **Salvar link no WL AD SPY LAB**.
-- O texto selecionado e a URL da página são enviados ao formulário de captura para revisão manual.
-- Cadastro de anúncios, anunciantes, nicho, produto, formato, CTA, tags e observações.
-- Biblioteca com busca, filtro por formato, favoritos e exclusão.
-- Dashboard com indicadores do próprio banco local.
-- Criação de oportunidades a partir de anúncios salvos.
-- Configuração de backend de IA, com autorização de host solicitada somente para o endereço informado.
-- Exportação JSON completa, exportação CSV e restauração de backup.
+- Biblioteca de anúncios e referências salva no próprio Chrome.
+- Captura manual de texto selecionado e links pelo menu de contexto.
+- Dashboard com indicadores do banco local.
+- Ofertas salvas, palavras-chave, rastreamento manual e dossiê de domínios.
+- Análise automática por regras locais: identifica sinais de público, dor, desejo, mecanismo, promessa, provas mencionadas, gatilhos e CTA. Não usa IA generativa.
+- Radar de checkout: inspeciona a URL pública informada manualmente e tenta reconhecer links de plataformas de pagamento visíveis no HTML.
+- Biblioteca de transcrições manuais: permite colar e organizar textos de vídeos/anúncios.
+- Exportação JSON/CSV e restauração de backup.
 
-## Instalar no Chrome (sem compilar)
+## O que foi removido para evitar custos
 
-1. Extraia o arquivo ZIP.
-2. Abra `chrome://extensions` no Google Chrome.
+- Similarweb e a variável `SIMILARWEB_API_KEY`: removidos. Não há consulta de estimativas de tráfego de terceiros.
+- Vercel AI Gateway e modelos de IA: removidos da análise e da transcrição. A análise agora usa regras locais, sem cobrança por tokens.
+- Transcrição automática de áudio/vídeo por IA: removida. A biblioteca aceita transcrições coladas manualmente.
+- Nenhuma chave de API paga é necessária.
+
+O módulo **Dossiê de domínio** continua disponível para você registrar manualmente informações e fontes que encontrou. O sistema não inventa estimativas de visitas ou vendas.
+
+## Instalação no Chrome
+
+1. Extraia o ZIP.
+2. Abra `chrome://extensions`.
 3. Ative **Modo do desenvolvedor**.
 4. Clique em **Carregar sem compactação**.
-5. Selecione a pasta `extension-dist` que está dentro da pasta extraída.
-6. Fixe o WL AD SPY LAB na barra de extensões.
-7. Clique no ícone para abrir o painel lateral.
+5. Selecione a pasta `extension-dist`.
+6. Fixe WL AD SPY LAB na barra do Chrome.
 
-Para abrir o dashboard completo, use a seta no topo do painel lateral.
+Para atualizar uma instalação existente, substitua os arquivos da pasta carregada e clique em **Recarregar** na página de extensões. Faça um backup JSON antes de atualizar.
 
-## Como capturar um anúncio
+## Configuração do backend gratuito
+
+O backend mantém apenas o Radar de checkout e a análise heurística. Ele não consulta Similarweb nem chama provedores de IA.
+
+1. O projeto está preparado para deploy na Vercel.
+2. Configure somente `AD_SPY_ACCESS_TOKEN` como variável Sensitive em Production.
+3. Não configure `SIMILARWEB_API_KEY`, `AI_GATEWAY_API_KEY`, `AI_MODEL` ou `TRANSCRIBE_MODEL`.
+4. Faça o deploy e informe a URL do backend e o token na configuração local da extensão quando o radar solicitar.
+
+A chave de acesso fica no servidor e o token é armazenado localmente no seu perfil do Chrome. Não compartilhe esse token.
+
+### Atenção sobre o plano gratuito da Vercel
+
+A Vercel anuncia o Hobby por US$ 0, mas seus termos atuais limitam esse plano a projetos de uso pessoal e não comercial. Ele também possui limites de uso. Portanto, o código não depende de APIs pagas, mas não posso garantir hospedagem gratuita para uso comercial dentro do Hobby. Não faça upgrade nem habilite serviços pagos sem conferir os custos e as condições do plano.
+
+## Capturar anúncios
 
 1. Abra a Biblioteca de Anúncios da Meta normalmente.
-2. Selecione o texto do anúncio que deseja guardar.
-3. Clique com o botão direito.
-4. Escolha **Salvar seleção no WL AD SPY LAB**. Para capturar o destino de um link, clique com o botão direito sobre ele e escolha **Salvar link no WL AD SPY LAB**.
-5. Revise o texto, complete anunciante, nicho ou produto e clique em **Salvar na minha biblioteca**.
+2. Selecione o texto do anúncio.
+3. Clique com o botão direito e escolha **Salvar seleção no WL AD SPY LAB**.
+4. Revise os dados e salve na biblioteca.
 
-A V1 não faz raspagem em massa, não baixa automaticamente criativos e não tenta contornar mecanismos da Meta. A captura é iniciada pelo usuário e deve respeitar os termos e permissões aplicáveis.
+A extensão não faz raspagem em massa, não baixa criativos automaticamente e não tenta contornar os mecanismos da Meta.
 
-## Ativar análise com IA
+## Limites importantes
 
-A interface da extensão já chama `POST /api/analyze`. O backend foi publicado em produção na Vercel: `https://wl-ad-spy-lab.vercel.app`. A URL já vem preenchida nas Configurações da extensão.
-
-**Estado atual:** o backend já usa o Vercel AI Gateway com o modelo padrão `openai/gpt-6.1-sol-fast`. O projeto está configurado para autenticação OIDC do Vercel. A chave do provedor nunca é colocada na extensão. O endpoint ainda precisa ser validado por uma chamada real autorizada; uso do Gateway pode gerar cobrança/créditos na conta Vercel.
-
-### Publicar o backend na Vercel
-
-1. Faça upload/importação desta pasta como um projeto no GitHub e importe o repositório na Vercel, ou use o fluxo de deploy de sua preferência.
-2. Mantenha a raiz do projeto como diretório raiz da Vercel.
-3. Configure `AD_SPY_ACCESS_TOKEN` com um token longo e exclusivo para proteger seu endpoint pessoal. O projeto já define `AI_MODEL=openai/gpt-6.1-sol-fast` e usa OIDC para autenticação integrada do Vercel AI Gateway. Só configure `AI_GATEWAY_API_KEY` caso sua conta/implantação não consiga usar a autenticação OIDC.
-4. Faça o deploy.
-5. No WL AD SPY LAB, abra **Configurações** e informe a URL do projeto e o mesmo `AD_SPY_ACCESS_TOKEN`.
-6. Clique em **Salvar e autorizar conexão**. O Chrome pedirá permissão para conectar somente ao domínio informado.
-7. Clique em **Testar conexão** para conferir se o endpoint e o modelo estão configurados.
-
-O modelo padrão pode ser alterado pela variável `AI_MODEL`. Consulte o catálogo atual do Vercel AI Gateway antes de trocar o identificador.
-
-### Importante sobre o token
-
-Esta V1 é direcionada a uso individual. O token de acesso ao backend fica armazenado no perfil local do Chrome e pode ser extraído por alguém que tenha acesso ao perfil/dispositivo. Não compartilhe o mesmo backend/token publicamente nem distribua esta compilação como serviço multiusuário. Para uso público, a próxima etapa deve implementar autenticação individual, rate limiting, quotas e gestão de usuários.
-
-A chave do provedor de IA nunca deve ser colocada na extensão. Ela fica apenas nas variáveis de ambiente do backend.
-
-## Arquitetura
-
-A interface V1 usa HTML, CSS e JavaScript nativos para manter a extensão pequena, rápida e instalável diretamente pelo Chrome, sem etapa de compilação do frontend. O armazenamento usa IndexedDB. O backend de análise é separado e utiliza Vercel AI SDK + AI Gateway.
-
-## Estrutura do projeto
-
-```text
-ad-spy-lab-v1/
-├── api/
-│   ├── analyze.ts
-│   └── health.ts
-├── public/
-│   ├── index.html
-│   ├── manifest.json
-│   └── icons/
-├── src/
-│   ├── app.js
-│   ├── background/service-worker.js
-│   ├── dashboard/index.html
-│   ├── lib/db.js
-│   ├── sidepanel/index.html
-│   └── styles/app.css
-├── extension-dist/
-├── scripts/build-extension.mjs
-├── package.json
-└── vercel.json
-```
+- O radar só inspeciona a URL pública enviada manualmente. Conteúdo carregado por JavaScript, páginas autenticadas ou protegidas pode não ser detectado.
+- A presença de um checkout não comprova vendas, faturamento ou quantidade de compradores.
+- O score da análise mede sinais textuais observáveis, não desempenho comercial.
+- A biblioteca e os registros ficam no perfil local do Chrome. A sincronização entre dispositivos não está incluída.
+- A extensão não fornece números de tráfego de concorrentes sem uma fonte confiável.
 
 ## Reconstruir a extensão
 
-Requer Node.js 22 ou superior para o backend de IA. Não é necessário instalar dependências para montar os arquivos da extensão:
+Requer Node.js 22 ou superior:
 
 ```bash
 npm run build
 ```
 
-A saída ficará em `extension-dist/`.
-
-## Limitações conhecidas da V1
-
-- O registro de anúncios é manual, com atalho para enviar texto selecionado e URL. Dados como anunciante, ID, data inicial e formato devem ser revisados/preenchidos pelo usuário.
-- Não há acesso a vendas, investimento, ROAS, conversões ou faturamento de concorrentes.
-- O score avalia a estrutura observável da oferta, não o desempenho comercial.
-- A análise atual é textual. Análise multimodal de imagens/vídeos e leitura assistida de landing pages ficam para uma próxima versão.
-- O banco é local a este perfil/navegador. A sincronização entre dispositivos ainda não está incluída.
-
-## Próximos incrementos recomendados
-
-1. Edição completa de anúncios e gestão de pastas/tags.
-2. Histórico e comparação de análises.
-3. Upload/análise de imagens de criativos.
-4. Dossiê de landing page a partir de conteúdo fornecido pelo usuário.
-5. Autenticação individual e sincronização segura.
-
-
-## V0.2.0 — módulos locais de inteligência
-
-A V0.2.0 adiciona uma central complementar aberta pelo botão **Inteligência**, sem substituir a identidade visual da interface principal.
-
-- **Ofertas salvas:** registro local de oferta, URL, nicho e observações.
-- **Palavras-chave:** coleções de termos por nicho e idioma.
-- **Rastreamento manual:** histórico de observações de quantidade de anúncios e fonte.
-- **Dossiê de domínios:** registro de métricas fornecidas pelo usuário, fonte e notas.
-- **Transcrições:** armazenamento de texto transcrito/fornecido pelo usuário para consulta posterior.
-
-Os registros novos ficam no armazenamento local do Chrome, separados do banco de anúncios V1. Eles não sincronizam entre dispositivos.
-
-### Limites explícitos dos módulos
-
-- Rastreamento não consulta anúncios da Meta automaticamente nem estima vendas.
-- A aba **Tráfego** consulta a API v5 do Similarweb para visitas, visitantes, visualizações, taxa de rejeição e páginas por visita no Brasil, com série mensal dos seis meses completos mais recentes. As métricas são estimativas do Similarweb, não analytics internos do concorrente. Exige `SIMILARWEB_API_KEY` na Vercel e uma conta Similarweb com API/créditos liberados.
-- A aba Transcrição aceita texto manual ou vídeo local: extrai apenas o áudio no navegador e solicita transcrição automática ao backend Vercel AI Gateway.
-- A aba **Radar de checkout** inspeciona uma URL pública enviada manualmente, encontra links de checkout visíveis no HTML e identifica plataformas conhecidas (Cakto, Hotmart, Kiwify, Eduzz, Ticto, Greenn, PerfectPay, Monetizze, Kirvano, Yampi, Appmax e Braip). Não confirma vendas, faturamento nem quantidade de compradores; conteúdo renderizado por JavaScript ou atrás de login pode não aparecer.
-- A análise por IA usa o modelo padrão do AI Gateway configurado no projeto; a disponibilidade depende de o OIDC e o faturamento/créditos do Gateway estarem ativos.
-
-### Atualização
-
-Depois de carregar a pasta extension-dist no Chrome, abra chrome://extensions, localize WL AD SPY LAB e clique em Atualizar (ou recarregue a extensão). Não remova a extensão antiga antes de exportar um backup, pois os dados ficam no perfil local.
-
-
-## V0.4.0 — tráfego, radar de checkout e IA
-
-- A entrada antiga **Zenly/Zedly** é removida do painel lateral e do dashboard por uma rotina de limpeza do menu, inclusive quando a interface é renderizada dinamicamente.
-- A aba **Transcrição** permite selecionar um arquivo de vídeo local. O navegador reproduz o vídeo localmente e extrai apenas a faixa de áudio em WebM/Opus; o vídeo original não é enviado ao backend.
-- A transcrição é processada pelo modelo `openai/gpt-transcribe` no Vercel AI Gateway e o texto reconhecido é salvo automaticamente na biblioteca local de transcrições.
-- Limites implementados: vídeo de até 12 minutos, arquivo original de até 250 MB e áudio extraído de até 2,5 MB por envio. O formato precisa ser reproduzido pelo Chrome.
-- O backend usa o token individual `AD_SPY_ACCESS_TOKEN`. Na aba Transcrição, informe a URL do backend e o mesmo token; ele fica armazenado apenas no perfil local do Chrome.
-- O projeto usa Node.js 22 e AI SDK 7. O Vercel AI Gateway precisa de autenticação OIDC habilitada no projeto ou de `AI_GATEWAY_API_KEY` como variável de ambiente. A chamada do modelo pode consumir créditos ou gerar cobrança na conta Vercel.
-- Não coloque a chave do Gateway dentro da extensão. O token de acesso e a credencial de IA são diferentes.
-
-### Baixar e instalar a versão atual
-
-O ZIP pronto é publicado junto com o site: [Baixar WL AD SPY LAB v0.3.3](https://wl-ad-spy-lab.vercel.app/WL_AD_SPY_LAB_v0.4.0.zip). Extraia o arquivo, abra `chrome://extensions`, ative o Modo do desenvolvedor, clique em **Carregar sem compactação** e selecione a pasta extraída. Para substituir uma instalação anterior, atualize a pasta carregada e clique em **Recarregar**.
-
-### Ativar a transcrição automática
-
-1. Na Vercel, configure `AD_SPY_ACCESS_TOKEN` com um token longo e exclusivo.
-2. Mantenha a autenticação OIDC habilitada para o projeto ou configure `AI_GATEWAY_API_KEY` como variável de ambiente.
-3. Faça o deploy de produção.
-4. Na extensão, abra **Inteligência → Transcrição**, informe `https://wl-ad-spy-lab.vercel.app` e o mesmo token definido na Vercel.
-5. Clique em **1. Autorizar acesso ao backend** e permita o domínio no aviso do Chrome.
-6. Selecione um vídeo e clique em **2. Transcrever vídeo automaticamente**. A autorização e a transcrição são ações separadas para o Chrome permitir a reprodução local do vídeo.
-
-O sistema processa vídeos selecionados manualmente pelo usuário. Ele não acessa vídeos de outras páginas ou anúncios automaticamente.
-
-
-### Ativar a integração de tráfego (Similarweb)
-
-1. A conta Similarweb precisa ter acesso ao produto API e créditos habilitados. A documentação oficial exige uma API key ativa; contas sem acesso à API não conseguem consultar os endpoints.
-2. No Similarweb, entre em **Settings → Account → Data Tools / API**, gere uma chave REST API e confirme que ela está ativa.
-3. Na Vercel, abra o projeto **wl-ad-spy-lab → Settings → Environment Variables**.
-4. Cadastre `SIMILARWEB_API_KEY` como variável **Sensitive** no ambiente **Production**.
-5. Faça novo deploy e use a aba **Inteligência → Tráfego** para consultar um domínio.
-
-Não cole a chave Similarweb na extensão nem em conversas. O endpoint `POST /api/traffic` mantém a credencial no servidor e valida o token pessoal do backend antes de consultar o provedor.
-
-### Usar o Radar de checkout
-
-1. Abra **Inteligência → Radar de checkout**.
-2. Cole a URL pública de uma página de vendas ou checkout encontrada durante sua pesquisa.
-3. Autorize o backend no Chrome e clique em **Inspecionar URL**.
-4. O radar registra a página, o título, um preço que esteja visível no HTML e os links de checkout reconhecidos.
-
-O radar consulta somente o endereço informado manualmente, limita o tamanho da página e bloqueia destinos locais/privados. Não faz varredura em massa de sites nem acessa áreas autenticadas.
+O ZIP é gerado em `extension-dist/WL_AD_SPY_LAB_v0.5.0.zip`.

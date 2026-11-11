@@ -2,18 +2,19 @@
   if (document.getElementById('wl-intel-launcher')) return;
   const KEY = 'wlSpyIntelV1';
   const DEFAULT_API = 'https://wl-ad-spy-lab.vercel.app';
-  const state = { tab: 'offers', backendAuthorized: false, items: { offers: [], keywords: [], tracking: [], domains: [], transcripts: [], traffic: [], checkouts: [] } };
+  const state = { tab: 'offers', backendAuthorized: false, items: { offers: [], keywords: [], tracking: [], domains: [], transcripts: [], checkouts: [] } };
   const read = async () => {
     const d = await chrome.storage.local.get([KEY, 'settings']);
     state.items = { ...state.items, ...(d[KEY] || {}) };
     const appSettings = d.settings || {};
-    const saved = state.items.backendConfig || state.items.transcribeConfig || {};
+    const saved = state.items.backendConfig || {};
     const sharedConfig = {
       apiBase: appSettings.apiBaseUrl || saved.apiBase || DEFAULT_API,
       token: appSettings.accessToken || saved.token || ''
     };
     state.items.backendConfig = sharedConfig;
-    if (!state.items.transcribeConfig) state.items.transcribeConfig = sharedConfig;
+    delete state.items.transcribeConfig;
+    delete state.items.traffic;
   };
   const save = async () => chrome.storage.local.set({ [KEY]: state.items });
   const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -58,7 +59,7 @@
   <div class="veil" id="veil"><section class="panel" role="dialog" aria-label="Central de inteligência">
   <header><div><strong>WL AD SPY LAB</strong><small>Central de inteligência e organização</small></div><button class="close" id="close">Fechar</button></header>
   <nav id="tabs">
-    <button data-tab="offers">Ofertas salvas</button><button data-tab="keywords">Palavras-chave</button><button data-tab="tracking">Rastreamento</button><button data-tab="domains">Domínios</button><button data-tab="traffic">Tráfego</button><button data-tab="checkout">Radar de checkout</button><button data-tab="transcript">Transcrição</button>
+    <button data-tab="offers">Ofertas salvas</button><button data-tab="keywords">Palavras-chave</button><button data-tab="tracking">Rastreamento</button><button data-tab="domains">Domínios</button><button data-tab="checkout">Radar de checkout</button><button data-tab="transcript">Transcrição</button>
   </nav><main id="content"></main></section></div>`;
   const $ = s => shadow.querySelector(s);
   $('#open').onclick = () => $('#veil').classList.add('open');
@@ -78,41 +79,32 @@
     if (state.tab === 'traffic') { renderTraffic(); return; }
     if (state.tab === 'checkout') { renderCheckout(); return; }
     if (state.tab === 'transcript') {
-      const cfg = state.items.backendConfig || state.items.transcribeConfig || {};
       c.innerHTML = `
-        <h3>Transcrição automática de vídeo</h3>
-        <p class="hint">Selecione um vídeo salvo no computador. O navegador extrai somente o áudio e envia para transcrição. O arquivo de vídeo não é enviado ao servidor.</p>
-        <section class="capture">
-          <h4 class="section-title">Transcrever um anúncio</h4>
-          <label>Arquivo de vídeo
-            <input id="videoFile" type="file" accept="video/*,.mp4,.mov,.webm,.m4v" />
-          </label>
-          <input id="videoTitle" placeholder="Nome do anúncio ou vídeo" />
-          <label>URL do backend
-            <input id="apiBase" type="url" value="${esc(cfg.apiBase || DEFAULT_API)}" />
-          </label>
-          <label>Token de acesso do backend
-            <input id="apiToken" type="password" autocomplete="off" placeholder="Cole o AD_SPY_ACCESS_TOKEN configurado na Vercel" />
-          </label>
-          <button class="secondary" id="authorizeBackend">1. Autorizar acesso ao backend</button>
-          <button class="primary" id="runTranscribe">2. Transcrever vídeo automaticamente</button>
-          <div class="status" id="transStatus" aria-live="polite"></div>
-          <p class="hint">Limite desta versão: vídeos de até 12 minutos e áudio extraído de até 2,5 MB por envio. O processamento usa créditos do Vercel AI Gateway.</p>
-        </section>
-        <h3>Salvar transcrição manual</h3>
-        <form id="transForm"><input name="title" placeholder="Nome do anúncio ou vídeo" required><textarea name="transcript" placeholder="Cole aqui uma transcrição..." required></textarea><button class="secondary">Salvar texto manualmente</button></form>
+        <h3>Biblioteca de transcrições</h3>
+        <p class="hint">Salve e organize transcrições obtidas por você. Esta versão não envia vídeos ou áudios para serviços de IA e não usa APIs pagas.</p>
+        <form id="transForm">
+          <input name="title" placeholder="Nome do anúncio ou vídeo" required>
+          <textarea name="transcript" placeholder="Cole aqui a transcrição do vídeo..." required></textarea>
+          <button class="primary">Salvar transcrição</button>
+        </form>
         <div id="transList"></div>`;
-      $('#apiToken').value = cfg.token || '';
-      $('#authorizeBackend').onclick = authorizeBackend;
-      $('#runTranscribe').onclick = runTranscription;
       $('#transForm').onsubmit = async e => {
         e.preventDefault();
         const f = new FormData(e.currentTarget);
         state.items.transcripts ||= [];
-        state.items.transcripts.unshift({ id: crypto.randomUUID(), title: f.get('title'), transcript: f.get('transcript'), createdAt: new Date().toISOString(), source: 'manual' });
-        await save(); render();
+        state.items.transcripts.unshift({
+          id: crypto.randomUUID(),
+          title: String(f.get('title') || '').trim(),
+          transcript: String(f.get('transcript') || '').trim(),
+          createdAt: new Date().toISOString(),
+          source: 'manual'
+        });
+        await save();
+        render();
       };
-      $('#transList').innerHTML = (state.items.transcripts || []).map(x => card(x.title, x.transcript + (x.language ? '\n\nIdioma: ' + x.language : ''), x.createdAt, 'transcripts', x.id)).join('') || '<div class="empty">Nenhuma transcrição salva.</div>';
+      $('#transList').innerHTML = (state.items.transcripts || [])
+        .map(x => card(x.title, x.transcript, x.createdAt, 'transcripts', x.id))
+        .join('') || '<div class="empty">Nenhuma transcrição salva.</div>';
       wireDeletes();
       return;
     }
@@ -131,52 +123,7 @@
 
 
   function currentBackendConfig() {
-    return state.items.backendConfig || state.items.transcribeConfig || {};
-  }
-
-  function renderTraffic() {
-    const cfg = currentBackendConfig();
-    $('#content').innerHTML =
-      '<h3>Tráfego estimado · Similarweb</h3>' +
-      '<p class="hint">Consulte estimativas mensais de visitas, visitantes, visualizações, rejeição e engajamento. Os dados vêm da API do Similarweb e não são analytics internos do concorrente.</p>' +
-      '<section class="capture"><label>Domínio para consultar<input id="trafficDomain" placeholder="exemplo.com.br" autocomplete="url"></label>' +
-      '<label>URL do backend<input id="trafficApiBase" type="url" value="' + esc(cfg.apiBase || DEFAULT_API) + '"></label>' +
-      '<label>Token de acesso do backend<input id="trafficToken" type="password" autocomplete="off" placeholder="Mesmo token usado na Transcrição"></label>' +
-      '<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="secondary" id="trafficAuthorize">1. Autorizar backend</button>' +
-      '<button class="primary" id="trafficRun">2. Consultar Similarweb</button></div><div class="status" id="trafficStatus" aria-live="polite"></div>' +
-      '<p class="hint">A chave Similarweb fica somente nas variáveis de ambiente da Vercel. A consulta usa créditos e depende de uma conta com acesso à API.</p></section>' +
-      '<div id="trafficHistory"></div>';
-    $('#trafficToken').value = cfg.token || '';
-    $('#trafficAuthorize').onclick = () => authorizeCustomBackend('trafficApiBase', 'trafficToken', 'trafficStatus');
-    $('#trafficRun').onclick = runTrafficLookup;
-    renderTrafficHistory();
-  }
-
-  function formatMetric(value) {
-    if (value === null || value === undefined || value === '') return '—';
-    const number = Number(value);
-    return Number.isFinite(number) ? Math.round(number).toLocaleString('pt-BR') : esc(value);
-  }
-
-  function renderTrafficHistory() {
-    const target = $('#trafficHistory');
-    if (!target) return;
-    const records = (state.items.traffic || []).slice(0, 12);
-    target.innerHTML = '<h3>Consultas recentes</h3>' + (records.map(record => {
-      const data = Array.isArray(record.data) ? record.data : [];
-      const rows = data.map(row =>
-        '<tr><td>' + esc(row.date || '—') + '</td><td style="text-align:right">' + formatMetric(row.visits) +
-        '</td><td style="text-align:right">' + formatMetric(row.unique_visitors) +
-        '</td><td style="text-align:right">' + (row.bounce_rate == null ? '—' : (Number(row.bounce_rate) * 100).toLocaleString('pt-BR', { maximumFractionDigits: 1 }) + '%') +
-        '</td><td style="text-align:right">' + (row.pages_per_visit == null ? '—' : Number(row.pages_per_visit).toLocaleString('pt-BR', { maximumFractionDigits: 2 })) + '</td></tr>'
-      ).join('');
-      return '<article class="item"><b>' + esc(record.domain || 'Domínio') + ' · Similarweb</b>' +
-        '<p class="meta">' + (record.fetchedAt ? new Date(record.fetchedAt).toLocaleString('pt-BR') : '') + ' · Estimativa mensal · Brasil</p>' +
-        '<div style="overflow:auto"><table style="width:100%;border-collapse:collapse;font-size:11px;min-width:410px">' +
-        '<thead><tr><th style="text-align:left;padding:6px">Mês</th><th style="text-align:right;padding:6px">Visitas</th><th style="text-align:right;padding:6px">Visitantes</th><th style="text-align:right;padding:6px">Rejeição</th><th style="text-align:right;padding:6px">Páginas/visita</th></tr></thead>' +
-        '<tbody>' + (rows || '<tr><td colspan="5">Sem série mensal retornada.</td></tr>') + '</tbody></table></div>' +
-        '<p>' + esc(record.disclaimer || 'Métricas estimadas pelo Similarweb.') + '</p></article>';
-    }).join('') || '<div class="empty">Nenhuma consulta de tráfego salva.</div>');
+    return state.items.backendConfig || {};
   }
 
   async function authorizeCustomBackend(baseId, tokenId, statusId) {
@@ -190,48 +137,12 @@
       if (!granted) throw new Error('A permissão de acesso ao backend não foi concedida.');
       state.backendAuthorized = true;
       state.items.backendConfig = { apiBase, token };
-      state.items.transcribeConfig = { apiBase, token };
       await save();
       status.textContent = 'Backend autorizado e configuração salva neste perfil do Chrome.';
       status.className = 'status good';
     } catch (error) {
       status.textContent = error?.message || 'Não foi possível autorizar o backend.';
       status.className = 'status error';
-    }
-  }
-
-  async function runTrafficLookup() {
-    const button = $('#trafficRun');
-    const status = $('#trafficStatus');
-    const domain = $('#trafficDomain').value.trim();
-    const apiBase = $('#trafficApiBase').value.trim().replace(/\/+$/, '');
-    const token = $('#trafficToken').value.trim();
-    const say = (message, type = '') => { status.textContent = message; status.className = 'status ' + type; };
-    if (!domain) return say('Informe o domínio que deseja consultar.', 'error');
-    if (!token) return say('Informe o token de acesso do backend.', 'error');
-    if (!state.backendAuthorized) return say('Autorize o backend primeiro. Essa etapa libera a conexão no Chrome.', 'error');
-    button.disabled = true;
-    try {
-      state.items.backendConfig = { apiBase, token };
-      state.items.transcribeConfig = { apiBase, token };
-      await save();
-      say('Consultando métricas no Similarweb...');
-      const response = await fetch(apiBase + '/api/traffic', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-        body: JSON.stringify({ domain })
-      });
-      const payload = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(payload.error || 'Falha ao consultar o tráfego (HTTP ' + response.status + ').');
-      state.items.traffic ||= [];
-      state.items.traffic.unshift({ ...payload, id: crypto.randomUUID(), createdAt: new Date().toISOString() });
-      await save();
-      say('Consulta concluída. Os dados foram salvos no histórico.', 'good');
-      renderTrafficHistory();
-    } catch (error) {
-      say(error?.message || 'Não foi possível consultar o Similarweb.', 'error');
-    } finally {
-      button.disabled = false;
     }
   }
 
@@ -282,7 +193,6 @@
     button.disabled = true;
     try {
       state.items.backendConfig = { apiBase, token };
-      state.items.transcribeConfig = { apiBase, token };
       await save();
       say('Abrindo a página pública e procurando links de checkout...');
       const response = await fetch(apiBase + '/api/checkout-radar', {
@@ -300,134 +210,6 @@
     } catch (error) {
       say(error?.message || 'Não foi possível inspecionar esta URL.', 'error');
     } finally {
-      button.disabled = false;
-    }
-  }
-
-  async function authorizeBackend() {
-    const button = $('#authorizeBackend');
-    const status = $('#transStatus');
-    const say = (message, type = '') => { status.textContent = message; status.className = 'status ' + type; };
-    button.disabled = true;
-    try {
-      const apiBase = $('#apiBase').value.trim().replace(/\/+$/, '');
-      const origin = new URL(apiBase).origin;
-      const granted = await chrome.permissions.request({ origins: [origin + '/*'] });
-      if (!granted) throw new Error('A permissão de acesso ao backend não foi concedida.');
-      state.backendAuthorized = true;
-      state.items.backendConfig = { apiBase, token: $('#apiToken').value.trim() };
-      await save();
-      say('Acesso autorizado. Agora clique em “2. Transcrever vídeo automaticamente”.', 'good');
-    } catch (error) {
-      say(error?.message || 'Não foi possível autorizar o backend.', 'error');
-    } finally {
-      button.disabled = false;
-    }
-  }
-
-  async function runTranscription() {
-    const button = $('#runTranscribe');
-    const status = $('#transStatus');
-    const file = $('#videoFile').files?.[0];
-    const title = $('#videoTitle').value.trim() || file?.name || 'Vídeo sem título';
-    const apiBase = $('#apiBase').value.trim().replace(/\/+$/, '');
-    const token = $('#apiToken').value.trim();
-    const say = (message, type = '') => { status.textContent = message; status.className = 'status ' + type; };
-    if (!file) return say('Selecione um arquivo de vídeo primeiro.', 'error');
-    if (!token) return say('Informe o token configurado na variável AD_SPY_ACCESS_TOKEN da Vercel.', 'error');
-    try {
-      const url = new URL(apiBase);
-      if (!['https:', 'http:'].includes(url.protocol)) throw new Error('URL do backend inválida.');
-    } catch (e) { return say('Informe uma URL válida do backend (https://...).', 'error'); }
-    if (file.size > 250 * 1024 * 1024) return say('O arquivo excede o limite de 250 MB nesta versão.', 'error');
-    if (!state.backendAuthorized) return say('Clique primeiro em “1. Autorizar acesso ao backend”. Depois, clique novamente para transcrever.', 'error');
-
-    button.disabled = true;
-    let video, audioContext, recorder, timer, objectUrl;
-    try {
-      state.items.transcribeConfig = { apiBase, token };
-      state.items.backendConfig = { apiBase, token };
-      await save();
-      say('Preparando o vídeo e extraindo apenas o áudio...');
-      objectUrl = URL.createObjectURL(file);
-      video = document.createElement('video');
-      video.preload = 'auto';
-      video.playsInline = true;
-      video.controls = false;
-      video.style.cssText = 'position:fixed;left:-10000px;top:0;width:2px;height:2px;opacity:0;pointer-events:none;';
-      video.src = objectUrl;
-      document.body.append(video);
-      audioContext = new AudioContext();
-      const source = audioContext.createMediaElementSource(video);
-      const destination = audioContext.createMediaStreamDestination();
-      source.connect(destination);
-      const mime = MediaRecorder.isTypeSupported('audio/webm;codecs=opus') ? 'audio/webm;codecs=opus' : 'audio/webm';
-      if (!MediaRecorder.isTypeSupported(mime)) throw new Error('Este Chrome não oferece gravação de áudio WebM/Opus.');
-      recorder = new MediaRecorder(destination.stream, { mimeType: mime, audioBitsPerSecond: 24000 });
-      const chunks = [];
-      recorder.addEventListener('dataavailable', e => { if (e.data?.size) chunks.push(e.data); });
-      const metadata = video.readyState >= 1 ? Promise.resolve() : new Promise((resolve, reject) => {
-        video.addEventListener('loadedmetadata', resolve, { once: true });
-        video.addEventListener('error', () => reject(new Error('Não foi possível ler o formato deste vídeo no Chrome.')), { once: true });
-      });
-      const ended = new Promise((resolve, reject) => {
-        video.addEventListener('ended', resolve, { once: true });
-        video.addEventListener('error', () => reject(new Error('Falha ao reproduzir o vídeo para extrair o áudio.')), { once: true });
-      });
-      const audioContextReady = audioContext.resume();
-      const playback = video.play();
-      recorder.start(1000);
-      const persistConfig = save();
-      await Promise.all([metadata, audioContextReady, playback, persistConfig]);
-      if (!Number.isFinite(video.duration) || video.duration <= 0) throw new Error('Não foi possível identificar a duração do vídeo.');
-      if (video.duration > 12 * 60) throw new Error('Este vídeo passa de 12 minutos. Reduza o trecho e tente novamente.');
-      timer = setInterval(() => {
-        const pct = Math.min(99, Math.floor((video.currentTime / video.duration) * 100));
-        say('Extraindo áudio localmente: ' + pct + '% · não feche esta janela.');
-      }, 400);
-      await ended;
-      if (timer) clearInterval(timer);
-      const stopped = new Promise(resolve => recorder.addEventListener('stop', resolve, { once: true }));
-      if (recorder.state !== 'inactive') recorder.stop();
-      await stopped;
-      const audioBlob = new Blob(chunks, { type: recorder.mimeType || 'audio/webm' });
-      if (!audioBlob.size) throw new Error('Nenhum áudio foi extraído. Confirme se o vídeo possui faixa de áudio.');
-      if (audioBlob.size > 2.5 * 1024 * 1024) throw new Error('O áudio extraído ficou acima de 2,5 MB. Reduza a duração/qualidade do vídeo e tente novamente.');
-      say('Enviando áudio para transcrição com IA...');
-      const bytes = new Uint8Array(await audioBlob.arrayBuffer());
-      let binary = '';
-      for (let i = 0; i < bytes.length; i += 0x8000) binary += String.fromCharCode(...bytes.subarray(i, Math.min(i + 0x8000, bytes.length)));
-      const audioBase64 = btoa(binary);
-      const response = await fetch(apiBase + '/api/transcribe', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-        body: JSON.stringify({ audioBase64, mediaType: audioBlob.type || 'audio/webm', fileName: 'wl-ad-spy-audio.webm' })
-      });
-      const payload = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(payload.error || 'Erro HTTP ' + response.status + ' no serviço de transcrição.');
-      if (!payload.transcript?.trim()) throw new Error('A IA não identificou fala neste vídeo.');
-      state.items.transcripts ||= [];
-      state.items.transcripts.unshift({
-        id: crypto.randomUUID(),
-        title,
-        transcript: payload.transcript,
-        language: payload.language || '',
-        durationInSeconds: payload.durationInSeconds || video.duration,
-        model: payload.model || 'openai/gpt-transcribe',
-        source: 'video',
-        createdAt: new Date().toISOString()
-      });
-      await save();
-      say('Transcrição concluída e salva na biblioteca.', 'good');
-      render();
-    } catch (error) {
-      say(error?.message || 'Não foi possível transcrever este vídeo.', 'error');
-    } finally {
-      if (timer) clearInterval(timer);
-      try { if (recorder && recorder.state !== 'inactive') recorder.stop(); } catch {}
-      try { if (audioContext && audioContext.state !== 'closed') await audioContext.close(); } catch {}
-      try { video?.pause(); video?.remove(); } catch {}
-      if (objectUrl) URL.revokeObjectURL(objectUrl);
       button.disabled = false;
     }
   }
