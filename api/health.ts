@@ -11,7 +11,7 @@ export default function handler(req: VercelRequest, res: VercelResponse) {
 
   const expectedToken = process.env.AD_SPY_ACCESS_TOKEN;
   if (!expectedToken) return res.status(503).json({ error: 'Backend ainda não configurado.' });
-  const suppliedToken = String(req.headers.authorization || '').replace(/^Bearer\\s+/i, '');
+  const suppliedToken = String(req.headers.authorization || '').replace(/^Bearer\s+/i, '');
   const suppliedBuffer = new TextEncoder().encode(suppliedToken);
   const expectedBuffer = new TextEncoder().encode(expectedToken);
   if (!suppliedToken || suppliedBuffer.length !== expectedBuffer.length || !timingSafeEqual(suppliedBuffer, expectedBuffer)) {

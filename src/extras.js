@@ -76,7 +76,6 @@
   function render() {
     $('#tabs').querySelectorAll('button').forEach(b => b.classList.toggle('active', b.dataset.tab === state.tab));
     const c = $('#content');
-    if (state.tab === 'traffic') { renderTraffic(); return; }
     if (state.tab === 'checkout') { renderCheckout(); return; }
     if (state.tab === 'transcript') {
       c.innerHTML = `

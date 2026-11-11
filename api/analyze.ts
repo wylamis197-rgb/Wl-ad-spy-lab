@@ -10,7 +10,7 @@ function unique(values: string[]): string[] {
 }
 
 function authorized(req: VercelRequest, expected: string): boolean {
-  const supplied = String(req.headers.authorization || '').replace(/^Bearer\\s+/i, '');
+  const supplied = String(req.headers.authorization || '').replace(/^Bearer\s+/i, '');
   const a = new TextEncoder().encode(supplied);
   const b = new TextEncoder().encode(expected);
   return Boolean(supplied) && a.length === b.length && timingSafeEqual(a, b);
@@ -23,23 +23,23 @@ function analyzeLocally(ad: Record<string, unknown>) {
   const ctaInput = String(ad.cta || '').slice(0, 300).trim();
   const type = String(ad.type || '').slice(0, 100).trim();
   const text = copy.toLowerCase();
-  const sentences = copy.split(/(?<=[.!?])\\s+|\\n+/).map(s => s.trim()).filter(Boolean);
-  const audienceSentence = pickSentence(sentences, /\\b(para|ideal para|feito para|destinado a)\\s+.{3,100}/i);
-  const audienceMatch = copy.match(/\\b(?:para|ideal para|feito para|destinado a)\\s+([^.!?\\n]{3,120})/i);
-  const painSentence = pickSentence(sentences, /\\b(dificuldade|problema|medo|dor|cansad[oa]|sofre|sofrendo|não consegue|nao consegue|sem tempo|endivid|ansied|preocup)/i);
-  const desireSentence = pickSentence(sentences, /\\b(tenha|conquiste|consiga|aprenda|alcance|transforme|melhore|aumente|reduza|emagre|organize|economize|liberdade|resultado)/i);
-  const mechanismSentence = pickSentence(sentences, /\\b(método|metodo|passo a passo|guia|sistema|plano|protocolo|programa|treinamento|curso|estratégia|estrategia|aulas)/i);
-  const promiseSentence = pickSentence(sentences, /\\b(aprenda|descubra|consiga|tenha|alcance|transforme|reduza|aumente|elimine|faça|faca|emagrec|economize)\\b/i);
-  const ctaMatch = copy.match(/([^.!?\\n]{0,80}\\b(compre agora|clique aqui|saiba mais|garanta|acesse|peça agora|peca agora|chame no whatsapp|envie uma mensagem|comece hoje)\\b[^.!?\\n]{0,80})/i);
-  const proofTerms = /depoimento|avaliaç|avaliac|clientes|alunos|nota \\d|\\d+[.,]?\\d*%|antes e depois|casos reais|milhares de/i;
-  const priceTerms = /r\\$\\s?\\d|\\d+[.,]\\d{2}\\s?reais|por apenas|de r\\$/i;
+  const sentences = copy.split(/(?<=[.!?])\s+|\n+/).map(s => s.trim()).filter(Boolean);
+  const audienceSentence = pickSentence(sentences, /\b(para|ideal para|feito para|destinado a)\s+.{3,100}/i);
+  const audienceMatch = copy.match(/\b(?:para|ideal para|feito para|destinado a)\s+([^.!?\n]{3,120})/i);
+  const painSentence = pickSentence(sentences, /\b(dificuldade|problema|medo|dor|cansad[oa]|sofre|sofrendo|não consegue|nao consegue|sem tempo|endivid|ansied|preocup)/i);
+  const desireSentence = pickSentence(sentences, /\b(tenha|conquiste|consiga|aprenda|alcance|transforme|melhore|aumente|reduza|emagre|organize|economize|liberdade|resultado)/i);
+  const mechanismSentence = pickSentence(sentences, /\b(método|metodo|passo a passo|guia|sistema|plano|protocolo|programa|treinamento|curso|estratégia|estrategia|aulas)/i);
+  const promiseSentence = pickSentence(sentences, /\b(aprenda|descubra|consiga|tenha|alcance|transforme|reduza|aumente|elimine|faça|faca|emagrec|economize)\b/i);
+  const ctaMatch = copy.match(/([^.!?\n]{0,80}\b(compre agora|clique aqui|saiba mais|garanta|acesse|peça agora|peca agora|chame no whatsapp|envie uma mensagem|comece hoje)\b[^.!?\n]{0,80})/i);
+  const proofTerms = /depoimento|avaliaç|avaliac|clientes|alunos|nota \d|\d+[.,]?\d*%|antes e depois|casos reais|milhares de/i;
+  const priceTerms = /r\$\s?\d|\d+[.,]\d{2}\s?reais|por apenas|de r\$/i;
   const urgencyTerms = /hoje|somente hoje|só até|so ate|últim[oa]s?|ultim[oa]s?|encerra|prazo|até meia-noite|ate meia-noite|vagas limitadas/i;
-  const scarcityTerms = /últimas? vagas|ultim[oa]s? vagas|poucas unidades|estoque limitado|vagas limitadas|somente \\d+|apenas \\d+/i;
+  const scarcityTerms = /últimas? vagas|ultim[oa]s? vagas|poucas unidades|estoque limitado|vagas limitadas|somente \d+|apenas \d+/i;
   const bonusTerms = /bônus|bonus|grátis|gratis|presente|inclui também|inclui tambem/i;
   const guaranteeTerms = /garantia|reembolso|devolução|devolucao|dias para testar/i;
   const authorityTerms = /especialista|profissional|certificad[oa]|anos de experiência|anos de experiencia|autoridade/i;
 
-  const audience = audienceMatch ? audienceMatch[0].replace(/\\s+/g, ' ').trim() : unknown;
+  const audience = audienceMatch ? audienceMatch[0].replace(/\s+/g, ' ').trim() : unknown;
   const pain = painSentence || unknown;
   const desire = desireSentence || unknown;
   const mechanism = mechanismSentence || unknown;
@@ -57,12 +57,12 @@ function analyzeLocally(ad: Record<string, unknown>) {
     contains(text, authorityTerms) ? 'Autoridade' : '',
     contains(text, proofTerms) ? 'Prova social ou números citados' : '',
     contains(text, priceTerms) ? 'Preço ou condição comercial' : '',
-    contains(text, /desconto|promoção|promocao|oferta especial|de r\\$/i) ? 'Desconto ou promoção' : ''
+    contains(text, /desconto|promoção|promocao|oferta especial|de r\$/i) ? 'Desconto ou promoção' : ''
   ]);
 
   const angle = contains(text, /econom|barat|preço|preco|desconto|promoç|promoc/i) ? 'Preço e economia'
     : contains(text, /medo|risco|perigo|perder|problema|dor/i) ? 'Dor e prevenção'
-    : contains(text, /rápid|rapido|em \\d+ dias|hoje|imediat/i) ? 'Rapidez e conveniência'
+    : contains(text, /rápid|rapido|em \d+ dias|hoje|imediat/i) ? 'Rapidez e conveniência'
     : contains(text, /família|familia|filho|mãe|mae|pai|criança|crianca/i) ? 'Família e cuidado'
     : unknown;
 
@@ -70,11 +70,11 @@ function analyzeLocally(ad: Record<string, unknown>) {
   const audiencePainDesire = detailScore(Boolean(audienceMatch), 5) +
     detailScore(Boolean(painSentence), 7) + detailScore(Boolean(desireSentence), 8);
   const mechanismScore = detailScore(Boolean(mechanismSentence), 12, contains(text, /método|metodo|guia|curso|aulas/i) ? 5 : 0);
-  const promiseScore = detailScore(Boolean(promiseSentence), /\\d+\\s?(dias|semanas|meses|passos|aulas|minutos|%)|em até|em ate/i.test(copy) ? 15 : 9, 0);
+  const promiseScore = detailScore(Boolean(promiseSentence), /\d+\s?(dias|semanas|meses|passos|aulas|minutos|%)|em até|em ate/i.test(copy) ? 15 : 9, 0);
   const productScore = detailScore(Boolean(product), 7) + detailScore(Boolean(type), 4) + detailScore(copy.length > 120, 4);
   const offerScore = detailScore(contains(text, priceTerms), 4) + detailScore(contains(text, bonusTerms), 4) +
     detailScore(contains(text, guaranteeTerms), 4) + detailScore(Boolean(ad.cta), 3);
-  const proofScore = detailScore(contains(text, proofTerms), /\\d+[.,]?\\d*%|\\d+ clientes|\\d+ alunos/i.test(text) ? 10 : 6);
+  const proofScore = detailScore(contains(text, proofTerms), /\d+[.,]?\d*%|\d+ clientes|\d+ alunos/i.test(text) ? 10 : 6);
   const ctaScore = detailScore(Boolean(ctaInput || ctaMatch), 10);
   const breakdown = [
     { criterion: 'Público, dor e desejo', score: audiencePainDesire, maxScore: 20, justification: 'Pontuação baseada na presença de sinais textuais de público, problema e resultado desejado.' },
