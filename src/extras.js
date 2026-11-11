@@ -2,7 +2,7 @@
   if (document.getElementById('wl-intel-launcher')) return;
   const KEY = 'wlSpyIntelV1';
   const DEFAULT_API = 'https://wl-ad-spy-lab.vercel.app';
-  const state = { tab: 'offers', items: { offers: [], keywords: [], tracking: [], domains: [], transcripts: [] } };
+  const state = { tab: 'offers', backendAuthorized: false, items: { offers: [], keywords: [], tracking: [], domains: [], transcripts: [] } };
   const read = async () => {
     const d = await chrome.storage.local.get(KEY);
     state.items = { ...state.items, ...(d[KEY] || {}) };
@@ -84,7 +84,8 @@
           <label>Token de acesso do backend
             <input id="apiToken" type="password" autocomplete="off" placeholder="Cole o AD_SPY_ACCESS_TOKEN configurado na Vercel" />
           </label>
-          <button class="primary" id="runTranscribe">Transcrever vídeo automaticamente</button>
+          <button class="secondary" id="authorizeBackend">1. Autorizar acesso ao backend</button>
+          <button class="primary" id="runTranscribe">2. Transcrever vídeo automaticamente</button>
           <div class="status" id="transStatus" aria-live="polite"></div>
           <p class="hint">Limite desta versão: vídeos de até 12 minutos e áudio extraído de até 2,5 MB por envio. O processamento usa créditos do Vercel AI Gateway.</p>
         </section>
@@ -92,6 +93,7 @@
         <form id="transForm"><input name="title" placeholder="Nome do anúncio ou vídeo" required><textarea name="transcript" placeholder="Cole aqui uma transcrição..." required></textarea><button class="secondary">Salvar texto manualmente</button></form>
         <div id="transList"></div>`;
       $('#apiToken').value = cfg.token || '';
+      $('#authorizeBackend').onclick = authorizeBackend;
       $('#runTranscribe').onclick = runTranscription;
       $('#transForm').onsubmit = async e => {
         e.preventDefault();
@@ -117,6 +119,25 @@
     wireDeletes();
   }
 
+  async function authorizeBackend() {
+    const button = $('#authorizeBackend');
+    const status = $('#transStatus');
+    const say = (message, type = '') => { status.textContent = message; status.className = 'status ' + type; };
+    button.disabled = true;
+    try {
+      const apiBase = $('#apiBase').value.trim().replace(/\\/+$/, '');
+      const origin = new URL(apiBase).origin;
+      const granted = await chrome.permissions.request({ origins: [origin + '/*'] });
+      if (!granted) throw new Error('A permissão de acesso ao backend não foi concedida.');
+      state.backendAuthorized = true;
+      say('Acesso autorizado. Agora clique em “2. Transcrever vídeo automaticamente”.', 'good');
+    } catch (error) {
+      say(error?.message || 'Não foi possível autorizar o backend.', 'error');
+    } finally {
+      button.disabled = false;
+    }
+  }
+
   async function runTranscription() {
     const button = $('#runTranscribe');
     const status = $('#transStatus');
@@ -132,15 +153,12 @@
       if (!['https:', 'http:'].includes(url.protocol)) throw new Error('URL do backend inválida.');
     } catch (e) { return say('Informe uma URL válida do backend (https://...).', 'error'); }
     if (file.size > 250 * 1024 * 1024) return say('O arquivo excede o limite de 250 MB nesta versão.', 'error');
+    if (!state.backendAuthorized) return say('Clique primeiro em “1. Autorizar acesso ao backend”. Depois, clique novamente para transcrever.', 'error');
 
     button.disabled = true;
     let video, audioContext, recorder, timer, objectUrl;
     try {
-      const backendOrigin = new URL(apiBase).origin;
-      const permission = await chrome.permissions.request({ origins: [backendOrigin + '/*'] });
-      if (!permission) throw new Error('Permita o acesso da extensão ao backend para continuar.');
       state.items.transcribeConfig = { apiBase, token };
-      await save();
       say('Preparando o vídeo e extraindo apenas o áudio...');
       objectUrl = URL.createObjectURL(file);
       video = document.createElement('video');
@@ -167,9 +185,11 @@
         video.addEventListener('ended', resolve, { once: true });
         video.addEventListener('error', () => reject(new Error('Falha ao reproduzir o vídeo para extrair o áudio.')), { once: true });
       });
-      recorder.start(1000);
+      const audioContextReady = audioContext.resume();
       const playback = video.play();
-      await Promise.all([metadata, audioContext.resume(), playback]);
+      recorder.start(1000);
+      const persistConfig = save();
+      await Promise.all([metadata, audioContextReady, playback, persistConfig]);
       if (!Number.isFinite(video.duration) || video.duration <= 0) throw new Error('Não foi possível identificar a duração do vídeo.');
       if (video.duration > 12 * 60) throw new Error('Este vídeo passa de 12 minutos. Reduza o trecho e tente novamente.');
       timer = setInterval(() => {
