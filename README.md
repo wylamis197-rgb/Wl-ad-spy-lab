@@ -93,7 +93,7 @@ ad-spy-lab-v1/
 
 ## Reconstruir a extensão
 
-Requer Node.js 20 ou superior. Não é necessário instalar dependências para montar os arquivos da extensão:
+Requer Node.js 22 ou superior para o backend de IA. Não é necessário instalar dependências para montar os arquivos da extensão:
 
 ```bash
 npm run build
@@ -134,10 +134,31 @@ Os registros novos ficam no armazenamento local do Chrome, separados do banco de
 
 - Rastreamento não consulta anúncios da Meta automaticamente nem estima vendas.
 - Dossiê de domínio não consulta um provedor de tráfego nesta versão; só organiza informações e fontes inseridas pelo usuário.
-- Transcrições podem ser coladas e salvas; extração automática de áudio de arquivos de vídeo ainda não está implementada.
+- A aba Transcrição aceita texto manual ou vídeo local: extrai apenas o áudio no navegador e solicita transcrição automática ao backend Vercel AI Gateway.
 - O radar de checkouts e um ranking externo de ofertas escaladas ainda dependem de fontes de dados e integrações que não estão configuradas.
 - A análise de IA continua condicionada à configuração das variáveis e credenciais no projeto Vercel.
 
 ### Atualização
 
 Depois de carregar a pasta extension-dist no Chrome, abra chrome://extensions, localize WL AD SPY LAB e clique em Atualizar (ou recarregue a extensão). Não remova a extensão antiga antes de exportar um backup, pois os dados ficam no perfil local.
+
+
+## V0.3.0 — limpeza de interface e transcrição automática
+
+- A entrada antiga **Zenly/Zedly** é removida do painel lateral e do dashboard por uma rotina de limpeza do menu, inclusive quando a interface é renderizada dinamicamente.
+- A aba **Transcrição** permite selecionar um arquivo de vídeo local. O navegador reproduz o vídeo localmente e extrai apenas a faixa de áudio em WebM/Opus; o vídeo original não é enviado ao backend.
+- A transcrição é processada pelo modelo `openai/gpt-transcribe` no Vercel AI Gateway e o texto reconhecido é salvo automaticamente na biblioteca local de transcrições.
+- Limites implementados: vídeo de até 12 minutos, arquivo original de até 250 MB e áudio extraído de até 2,5 MB por envio. O formato precisa ser reproduzido pelo Chrome.
+- O backend usa o token individual `AD_SPY_ACCESS_TOKEN`. Na aba Transcrição, informe a URL do backend e o mesmo token; ele fica armazenado apenas no perfil local do Chrome.
+- O projeto usa Node.js 22 e AI SDK 7. O Vercel AI Gateway precisa de autenticação OIDC habilitada no projeto ou de `AI_GATEWAY_API_KEY` como variável de ambiente. A chamada do modelo pode consumir créditos ou gerar cobrança na conta Vercel.
+- Não coloque a chave do Gateway dentro da extensão. O token de acesso e a credencial de IA são diferentes.
+
+### Ativar a transcrição automática
+
+1. Na Vercel, configure `AD_SPY_ACCESS_TOKEN` com um token longo e exclusivo.
+2. Mantenha a autenticação OIDC habilitada para o projeto ou configure `AI_GATEWAY_API_KEY` como variável de ambiente.
+3. Faça o deploy de produção.
+4. Na extensão, abra **Inteligência → Transcrição**, informe `https://wl-ad-spy-lab.vercel.app` e o mesmo token definido na Vercel.
+5. Selecione um vídeo e clique em **Transcrever vídeo automaticamente**. O Chrome poderá solicitar permissão de acesso ao domínio do backend.
+
+O sistema processa vídeos selecionados manualmente pelo usuário. Ele não acessa vídeos de outras páginas ou anúncios automaticamente.
