@@ -11,6 +11,7 @@ await cp(resolve(root, 'src/sidepanel'), resolve(out, 'sidepanel'), { recursive:
 await cp(resolve(root, 'src/dashboard'), resolve(out, 'dashboard'), { recursive: true });
 await cp(resolve(root, 'src/lib'), resolve(out, 'lib'), { recursive: true });
 await writeFile(resolve(out, 'app.js'), gunzipSync(await readFile(resolve(root, 'src/app.js.gz'))));
+await writeFile(resolve(out, 'extras.js'), await readFile(resolve(root, 'src/extras.js')));
 await mkdir(resolve(out, 'styles'), { recursive: true });
 await writeFile(resolve(out, 'styles/app.css'), gunzipSync(await readFile(resolve(root, 'src/styles/app.css.gz'))));
 await cp(resolve(root, 'src/background/service-worker.js'), resolve(out, 'background.js'));
