@@ -2,7 +2,7 @@ import { timingSafeEqual } from 'node:crypto';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
 function authorized(req: VercelRequest, expected: string): boolean {
-  const supplied = String(req.headers.authorization || '').replace(/^Bearer\\s+/i, '');
+  const supplied = String(req.headers.authorization || '').replace(/^Bearer\s+/i, '');
   const encoder = new TextEncoder();
   const a = encoder.encode(supplied);
   const b = encoder.encode(expected);
@@ -11,9 +11,9 @@ function authorized(req: VercelRequest, expected: string): boolean {
 
 function normalizeDomain(value: unknown): string {
   const raw = String(value || '').trim().toLowerCase();
-  if (!raw || raw.length > 253 || /[\\s/@?#]/.test(raw)) throw new Error('Informe somente o domínio, por exemplo: exemplo.com.br.');
-  const host = raw.replace(/^https?:\\/\\//, '').replace(/^www\\./, '').replace(/\\.$/, '');
-  if (!/^(?=.{1,253}$)(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\\.)+[a-z]{2,63}$/.test(host)) {
+  if (!raw || raw.length > 253 || /[\s/@?#]/.test(raw)) throw new Error('Informe somente o domínio, por exemplo: exemplo.com.br.');
+  const host = raw.replace(/^https?:\/\//, '').replace(/^www\./, '').replace(/\.$/, '');
+  if (!/^(?=.{1,253}$)(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$/.test(host)) {
     throw new Error('Domínio inválido. Não inclua caminho, parâmetros ou protocolo.');
   }
   return host;
