@@ -116,3 +116,28 @@ A saída ficará em `extension-dist/`.
 3. Upload/análise de imagens de criativos.
 4. Dossiê de landing page a partir de conteúdo fornecido pelo usuário.
 5. Autenticação individual e sincronização segura.
+
+
+## V0.2.0 — módulos locais de inteligência
+
+A V0.2.0 adiciona uma central complementar aberta pelo botão **Inteligência**, sem substituir a identidade visual da interface principal.
+
+- **Ofertas salvas:** registro local de oferta, URL, nicho e observações.
+- **Palavras-chave:** coleções de termos por nicho e idioma.
+- **Rastreamento manual:** histórico de observações de quantidade de anúncios e fonte.
+- **Dossiê de domínios:** registro de métricas fornecidas pelo usuário, fonte e notas.
+- **Transcrições:** armazenamento de texto transcrito/fornecido pelo usuário para consulta posterior.
+
+Os registros novos ficam no armazenamento local do Chrome, separados do banco de anúncios V1. Eles não sincronizam entre dispositivos.
+
+### Limites explícitos dos módulos
+
+- Rastreamento não consulta anúncios da Meta automaticamente nem estima vendas.
+- Dossiê de domínio não consulta um provedor de tráfego nesta versão; só organiza informações e fontes inseridas pelo usuário.
+- Transcrições podem ser coladas e salvas; extração automática de áudio de arquivos de vídeo ainda não está implementada.
+- O radar de checkouts e um ranking externo de ofertas escaladas ainda dependem de fontes de dados e integrações que não estão configuradas.
+- A análise de IA continua condicionada à configuração das variáveis e credenciais no projeto Vercel.
+
+### Atualização
+
+Depois de carregar a pasta extension-dist no Chrome, abra chrome://extensions, localize WL AD SPY LAB e clique em Atualizar (ou recarregue a extensão). Não remova a extensão antiga antes de exportar um backup, pois os dados ficam no perfil local.
